@@ -3,11 +3,11 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-import backend.models as models
-import backend.schemas as schemas
-import backend.crud as crud
-import backend.logic as logic
-from backend.database import engine, get_db, Base
+import models as models
+import schemas as schemas
+import crud as crud
+import logic as logic
+from database import engine, get_db, Base
 
 # Creates tables on startup if they don't exist yet. Fine for a solo project;
 # for a real app with evolving schema you'd reach for Alembic migrations instead.
