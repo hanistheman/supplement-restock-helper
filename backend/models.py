@@ -19,6 +19,6 @@ class Supplement(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     start_date: Mapped[Date] = mapped_column(Date, nullable=False)
-    total_doses = Mapped[int] = mapped_column(Integer, nullable=False)
+    total_doses: Mapped[int] = mapped_column(Integer, nullable=False)
     doses_per_day: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
     notes: Mapped[str | None] = mapped_column(String, nullable=True)
