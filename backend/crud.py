@@ -7,8 +7,8 @@ queries are reusable/testable without needing a running API.
 """
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-import models
-import schemas
+import backend.models as models
+import backend.schemas as schemas
 
 
 def get_supplement(db: Session, supplement_id: int) -> models.Supplement | None:

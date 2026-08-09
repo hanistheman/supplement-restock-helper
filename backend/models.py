@@ -11,7 +11,7 @@ automatic changes to API contract (and vice versa).
 
 from sqlalchemy import Integer, String, Float, Date
 from sqlalchemy.orm import Mapped, mapped_column
-from database import Base
+from backend.database import Base
 
 class Supplement(Base):
     __tablename__ = "supplements"
