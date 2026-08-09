@@ -6,7 +6,7 @@ we change this. All other stuff talks to SQLAlchemy.
 """
 
 from sqlalchemy import create_engine
-from sqlalchemy import sessionmaker, DeclarativeBase
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./supplements.db"
 
