@@ -3,3 +3,4 @@ backend/__pycache__/
 *.pyc 
 __pycache__/
 supplements.db
+frontend/node_modules

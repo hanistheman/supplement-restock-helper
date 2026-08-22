@@ -85,14 +85,14 @@ export default function SupplementForm({ title, initial, onSubmit, onClose }) {
           </div>
 
           <label>
-            Total doses in bottle
+            Total servings in container
             <input
               type="number"
               required
               min="1"
               value={values.total_doses}
               onChange={handleChange("total_doses")}
-              placeholder="90"
+              placeholder="Enter your total doses from the package label"
             />
           </label>
 
@@ -102,7 +102,7 @@ export default function SupplementForm({ title, initial, onSubmit, onClose }) {
               type="text"
               value={values.notes}
               onChange={handleChange("notes")}
-              placeholder="5000 IU, from Costco"
+              placeholder="E.g 'from Costco'"
             />
           </label>
 
