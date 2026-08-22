@@ -1,0 +1,26 @@
+.supplement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.empty-state {
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  background: var(--paper);
+}
+
+.empty-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.empty-body {
+  color: var(--ink-soft);
+  margin: 0;
+  font-size: 14px;
+}

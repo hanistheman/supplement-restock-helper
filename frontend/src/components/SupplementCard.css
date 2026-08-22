@@ -1,0 +1,131 @@
+.supp-card {
+  background: var(--paper);
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--ok);
+  padding: 20px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.supp-card.status-low {
+  border-left-color: var(--low);
+}
+.supp-card.status-critical {
+  border-left-color: var(--critical);
+}
+.supp-card.status-overdue {
+  border-left-color: var(--overdue);
+}
+
+.supp-main {
+  flex: 1;
+  min-width: 220px;
+}
+
+.supp-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.supp-heading h2 {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--ok);
+}
+
+.badge-low {
+  background: #fbead1;
+  color: var(--low);
+}
+.badge-critical {
+  background: #fbe1d9;
+  color: var(--critical);
+}
+.badge-overdue {
+  background: #f6d9d9;
+  color: var(--overdue);
+}
+
+.supp-notes {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+/* Signature element: a capsule-shaped supply gauge, evoking a pill's two-tone shell. */
+.capsule-track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  overflow: hidden;
+  margin: 12px 0 10px;
+  max-width: 320px;
+}
+
+.capsule-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ok);
+  transition: width 0.4s ease;
+}
+
+.status-low .capsule-fill {
+  background: var(--low);
+}
+.status-critical .capsule-fill,
+.status-overdue .capsule-fill {
+  background: var(--critical);
+}
+
+.supp-meta {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.days-count {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.days-unit {
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.supp-dot {
+  color: var(--line);
+}
+
+.supp-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.supp-actions-row {
+  display: flex;
+  gap: 4px;
+}
