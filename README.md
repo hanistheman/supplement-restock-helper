@@ -7,9 +7,9 @@ Built as a learning project for REST API design (FastAPI + SQLAlchemy) and a Rea
 ## How it works
 
 For each supplement, you log:
-- When you started the current bottle
-- How many total doses are in it
-- How many doses you take per day
+- When you started the current package
+- How many total doses/servings are in it
+- How many doses/servings you take per day
 
 The app computes days remaining and a restock-by date, and flags anything running low, critical, or overdue — no manual logging of each dose required.
 
@@ -37,7 +37,7 @@ supplement-restock-predictor/
     ├── src/
     │   ├── api.js           # Fetch wrapper for backend calls
     │   ├── App.jsx           # Top-level state and layout
-    │   └── components/       # SupplementList, SupplementCard, SupplementForm
+    │   └── components/       # SupplementList, SupplementCard, SupplementForm and their corresponding .css files
     └── package.json
 ```
 
