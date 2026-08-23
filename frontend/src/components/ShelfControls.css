@@ -1,0 +1,39 @@
+.shelf-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 180px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.search-input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.shelf-controls select {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.shelf-controls select:focus {
+  border-color: var(--accent);
+  outline: none;
+}
