@@ -97,3 +97,4 @@ Full request/response schemas are viewable at `/docs` while the backend is runni
 - [ ] Sort/filter by status or name
 - [ ] Multi-user support with auth
 - [ ] Deploy backend + frontend so it's usable outside localhost
+- [ ] Implement additional information reporting such as cost/dose
