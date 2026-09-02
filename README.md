@@ -93,8 +93,10 @@ Full request/response schemas are viewable at `/docs` while the backend is runni
 
 ## Roadmap / ideas
 
-- [ ] Notifications/reminders before running out
+- [ ] Email notifications/reminders before running out
 - [ ] Sort/filter by status or name
 - [ ] Multi-user support with auth
+- [ ] Display possible restock sources (brick and mortar, or online)
+- [ ] Support for hyperlinks and plaintext in restock sources
 - [ ] Deploy backend + frontend so it's usable outside localhost
 - [ ] Implement additional information reporting such as cost/dose
