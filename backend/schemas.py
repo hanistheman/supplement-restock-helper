@@ -9,7 +9,23 @@ Naming convention used here:
 - SupplementOut    -> what the API returns (adds id + computed fields)
 """
 from datetime import date
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+
+
+class SourceBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    # HttpUrl validates the string is actually a well-formed URL, so a bad
+    # link fails at the API boundary rather than silently rendering broken.
+    url: HttpUrl | None = None
+
+
+class SourceCreate(SourceBase):
+    pass
+
+
+class SourceOut(SourceBase):
+    id: int
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SupplementBase(BaseModel):
@@ -21,7 +37,7 @@ class SupplementBase(BaseModel):
 
 
 class SupplementCreate(SupplementBase):
-    pass
+    sources: list[SourceCreate] = Field(default_factory=list)
 
 
 class SupplementUpdate(BaseModel):
@@ -38,6 +54,7 @@ class SupplementOut(SupplementBase):
     days_remaining: int
     restock_date: date
     status: str
+    sources: list[SourceOut] = Field(default_factory=list)
 
     # Lets Pydantic build this schema directly from a SQLAlchemy ORM object
     # (model.name, model.id, etc.) rather than requiring a dict.

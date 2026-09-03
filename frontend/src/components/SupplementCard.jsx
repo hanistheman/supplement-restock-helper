@@ -1,3 +1,4 @@
+import SourceList from "./SourceList";
 import "./SupplementCard.css";
 
 const STATUS_LABEL = {
@@ -14,8 +15,8 @@ function formatDate(iso) {
   });
 }
 
-export default function SupplementCard({ supplement, onEdit, onDelete, onRestock }) {
-  const { name, notes, days_remaining, restock_date, status, total_doses, doses_per_day } = supplement;
+export default function SupplementCard({ supplement, onEdit, onDelete, onRestock, onAddSource, onRemoveSource }) {
+  const { name, notes, days_remaining, restock_date, status, total_doses, doses_per_day, sources } = supplement;
 
   const totalDaysSupply = total_doses / doses_per_day;
   // Clamp so an overdue supplement still shows a spent-down bar rather than a negative one.
@@ -42,6 +43,12 @@ export default function SupplementCard({ supplement, onEdit, onDelete, onRestock
           <span className="supp-dot">·</span>
           <span>Restock by {formatDate(restock_date)}</span>
         </div>
+
+        <SourceList
+          sources={sources ?? []}
+          onAdd={(source) => onAddSource(supplement.id, source)}
+          onRemove={onRemoveSource}
+        />
       </div>
 
       <div className="supp-actions">

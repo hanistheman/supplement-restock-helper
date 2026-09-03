@@ -10,6 +10,7 @@ const emptyForm = {
 };
 
 export default function SupplementForm({ title, initial, onSubmit, onClose }) {
+  const isEditing = Boolean(initial);
   const [values, setValues] = useState(
     initial
       ? {
@@ -21,24 +22,43 @@ export default function SupplementForm({ title, initial, onSubmit, onClose }) {
         }
       : emptyForm
   );
+  // Sources are only collected here on create. On edit, they're managed
+  // directly on the card via dedicated add/remove endpoints, since a
+  // supplement's sources are their own sub-resource, not part of this form.
+  const [sources, setSources] = useState([{ name: "", url: "" }]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
   const handleChange = (field) => (e) =>
     setValues((v) => ({ ...v, [field]: e.target.value }));
 
+  const handleSourceChange = (index, field) => (e) => {
+    const next = [...sources];
+    next[index] = { ...next[index], [field]: e.target.value };
+    setSources(next);
+  };
+
+  const addSourceRow = () => setSources((s) => [...s, { name: "", url: "" }]);
+  const removeSourceRow = (index) => setSources((s) => s.filter((_, i) => i !== index));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
-      await onSubmit({
+      const payload = {
         name: values.name.trim(),
         start_date: values.start_date,
         total_doses: Number(values.total_doses),
         doses_per_day: Number(values.doses_per_day),
         notes: values.notes.trim() || null,
-      });
+      };
+      if (!isEditing) {
+        payload.sources = sources
+          .filter((s) => s.name.trim())
+          .map((s) => ({ name: s.name.trim(), url: s.url.trim() || null }));
+      }
+      await onSubmit(payload);
     } catch (err) {
       setError(err.message);
       setSubmitting(false);
@@ -85,14 +105,14 @@ export default function SupplementForm({ title, initial, onSubmit, onClose }) {
           </div>
 
           <label>
-            Total servings in container
+            Total doses in bottle
             <input
               type="number"
               required
               min="1"
               value={values.total_doses}
               onChange={handleChange("total_doses")}
-              placeholder="Enter your total doses from the package label"
+              placeholder="90"
             />
           </label>
 
@@ -102,9 +122,44 @@ export default function SupplementForm({ title, initial, onSubmit, onClose }) {
               type="text"
               value={values.notes}
               onChange={handleChange("notes")}
-              placeholder="E.g 'from Costco'"
+              placeholder="5000 IU, from Costco"
             />
           </label>
+
+          {!isEditing && (
+            <div className="source-section">
+              <p className="source-label">Where to restock (optional)</p>
+              {sources.map((source, i) => (
+                <div className="source-row" key={i}>
+                  <input
+                    type="text"
+                    placeholder="Store name (e.g. Costco)"
+                    value={source.name}
+                    onChange={handleSourceChange(i, "name")}
+                  />
+                  <input
+                    type="url"
+                    placeholder="Link (optional)"
+                    value={source.url}
+                    onChange={handleSourceChange(i, "url")}
+                  />
+                  {sources.length > 1 && (
+                    <button
+                      type="button"
+                      className="source-remove"
+                      onClick={() => removeSourceRow(i)}
+                      aria-label="Remove source"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button type="button" className="btn-text source-add" onClick={addSourceRow}>
+                + Add another source
+              </button>
+            </div>
+          )}
 
           {error && <p className="form-error">{error}</p>}
 

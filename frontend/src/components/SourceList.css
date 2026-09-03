@@ -1,0 +1,79 @@
+.source-list {
+  margin-top: 10px;
+}
+
+.source-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 4px 6px 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.source-chip a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.source-chip a:hover {
+  text-decoration: underline;
+}
+
+.chip-remove {
+  background: none;
+  border: none;
+  color: var(--accent);
+  opacity: 0.6;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.chip-remove:hover {
+  opacity: 1;
+}
+
+.source-add-trigger {
+  font-size: 12px;
+  padding: 2px 0;
+}
+
+.source-add-form {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.source-add-form input {
+  font-size: 12px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  min-width: 120px;
+}
+
+.source-add-form input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.source-error {
+  color: var(--critical);
+  font-size: 12px;
+  margin: 6px 0 0;
+}

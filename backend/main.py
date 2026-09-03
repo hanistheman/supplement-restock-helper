@@ -3,10 +3,10 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-import models as models
-import schemas as schemas
-import crud as crud
-import logic as logic
+import models
+import schemas
+import crud
+import logic
 from database import engine, get_db, Base
 
 # Creates tables on startup if they don't exist yet. Fine for a solo project;
@@ -37,6 +37,7 @@ def _to_out(s: models.Supplement) -> schemas.SupplementOut:
         days_remaining=days_left,
         restock_date=logic.restock_date(s.start_date, s.total_doses, s.doses_per_day),
         status=logic.status_for(days_left),
+        sources=[schemas.SourceOut.model_validate(src) for src in s.sources],
     )
 
 
@@ -83,3 +84,24 @@ def restock_supplement(supplement_id: int, new_total_doses: int | None = None, d
     db_supplement = _get_or_404(db, supplement_id)
     db_supplement = crud.restock_supplement(db, db_supplement, new_total_doses)
     return _to_out(db_supplement)
+
+
+# Sources are managed as their own sub-resource rather than folded into
+# PUT /supplements/{id}, since "add one more place I can buy this" is a
+# different operation from "edit this supplement's dosing info" — keeping
+# them separate avoids clients having to resend the whole source list just
+# to add one entry.
+@app.post("/supplements/{supplement_id}/sources", response_model=schemas.SupplementOut, status_code=201)
+def add_source(supplement_id: int, source: schemas.SourceCreate, db: Session = Depends(get_db)):
+    db_supplement = _get_or_404(db, supplement_id)
+    db_supplement = crud.add_source(db, db_supplement, source)
+    return _to_out(db_supplement)
+
+
+@app.delete("/sources/{source_id}", status_code=204)
+def delete_source(source_id: int, db: Session = Depends(get_db)):
+    db_source = crud.get_source(db, source_id)
+    if db_source is None:
+        raise HTTPException(status_code=404, detail=f"Source {source_id} not found")
+    crud.delete_source(db, db_source)
+    return None

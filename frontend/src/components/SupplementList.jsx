@@ -1,7 +1,7 @@
 import SupplementCard from "./SupplementCard";
 import "./SupplementList.css";
 
-export default function SupplementList({ supplements, onEdit, onDelete, onRestock, isFiltered = false }) {
+export default function SupplementList({ supplements, onEdit, onDelete, onRestock, onAddSource, onRemoveSource, isFiltered = false }) {
   if (supplements.length === 0) {
     return (
       <div className="empty-state">
@@ -24,6 +24,8 @@ export default function SupplementList({ supplements, onEdit, onDelete, onRestoc
           onEdit={() => onEdit(s)}
           onDelete={() => onDelete(s.id)}
           onRestock={() => onRestock(s.id)}
+          onAddSource={onAddSource}
+          onRemoveSource={onRemoveSource}
         />
       ))}
     </div>

@@ -7,8 +7,8 @@ queries are reusable/testable without needing a running API.
 """
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-import models as models
-import schemas as schemas
+import models
+import schemas
 
 
 def get_supplement(db: Session, supplement_id: int) -> models.Supplement | None:
@@ -20,11 +20,35 @@ def get_supplements(db: Session) -> list[models.Supplement]:
 
 
 def create_supplement(db: Session, supplement: schemas.SupplementCreate) -> models.Supplement:
-    db_supplement = models.Supplement(**supplement.model_dump())
+    data = supplement.model_dump(exclude={"sources"})
+    db_supplement = models.Supplement(**data)
+    # Convert each SourceCreate into a Source row and attach via the
+    # relationship — SQLAlchemy handles the supplement_id FK automatically
+    # once this object is added to the session.
+    for source in supplement.sources:
+        db_supplement.sources.append(models.Source(name=source.name, url=str(source.url) if source.url else None))
     db.add(db_supplement)
     db.commit()
     db.refresh(db_supplement)
     return db_supplement
+
+
+def add_source(db: Session, db_supplement: models.Supplement, source: schemas.SourceCreate) -> models.Supplement:
+    db_supplement.sources.append(
+        models.Source(name=source.name, url=str(source.url) if source.url else None)
+    )
+    db.commit()
+    db.refresh(db_supplement)
+    return db_supplement
+
+
+def get_source(db: Session, source_id: int) -> models.Source | None:
+    return db.get(models.Source, source_id)
+
+
+def delete_source(db: Session, db_source: models.Source) -> None:
+    db.delete(db_source)
+    db.commit()
 
 
 def update_supplement(

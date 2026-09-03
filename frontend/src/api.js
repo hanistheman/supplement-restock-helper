@@ -32,4 +32,10 @@ export const api = {
     const query = newTotalDoses ? `?new_total_doses=${newTotalDoses}` : "";
     return request(`/supplements/${id}/restock${query}`, { method: "POST" });
   },
+  addSource: (supplementId, source) =>
+    request(`/supplements/${supplementId}/sources`, {
+      method: "POST",
+      body: JSON.stringify(source),
+    }),
+  removeSource: (sourceId) => request(`/sources/${sourceId}`, { method: "DELETE" }),
 };

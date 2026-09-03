@@ -67,6 +67,54 @@
   margin: 0;
 }
 
+.source-section {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.source-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin: 0 0 8px;
+}
+
+.source-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.source-row input {
+  font-size: 13px;
+  padding: 8px 10px;
+}
+
+.source-remove {
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.source-remove:hover {
+  color: var(--critical);
+}
+
+.source-add {
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+.source-add:hover {
+  color: var(--accent);
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
