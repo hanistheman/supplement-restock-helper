@@ -7,12 +7,10 @@ import models
 import schemas
 import crud
 import logic
-from database import engine, get_db, Base
+from database import get_db
 
-# Creates tables on startup if they don't exist yet. Fine for a solo project;
-# for a real app with evolving schema you'd reach for Alembic migrations instead.
-Base.metadata.create_all(bind=engine)
-
+# Schema is now managed by Alembic migrations (see alembic/), not by
+# create_all() — run `alembic upgrade head` before starting the app.
 app = FastAPI(title="Supplement Restock Tracker")
 
 # Allows the React dev server (different origin/port) to call this API.
