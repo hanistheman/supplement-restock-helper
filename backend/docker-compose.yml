@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16
+    container_name: supplement_tracker_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: supplement_user
+      POSTGRES_PASSWORD: supplement_pass
+      POSTGRES_DB: supplement_tracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - supplement_tracker_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U supplement_user -d supplement_tracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  supplement_tracker_data:
