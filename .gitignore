@@ -5,3 +5,4 @@ __pycache__/
 *.db
 frontend/node_modules
 backend/.env.example
+backend/.env
