@@ -4,3 +4,4 @@ backend/__pycache__/
 __pycache__/
 *.db
 frontend/node_modules
+.env.example .env

@@ -7,9 +7,9 @@ Built as a learning project for REST API design (FastAPI + SQLAlchemy) and a Rea
 ## How it works
 
 For each supplement, you log:
-- When you started the current package
-- How many total doses/servings are in it
-- How many doses/servings you take per day
+- When you started the current bottle
+- How many total doses are in it
+- How many doses you take per day
 
 The app computes days remaining and a restock-by date, and flags anything running low, critical, or overdue — no manual logging of each dose required.
 
@@ -17,7 +17,7 @@ The app computes days remaining and a restock-by date, and flags anything runnin
 
 | Layer | Tech |
 |---|---|
-| Backend | Python, FastAPI, SQLAlchemy, SQLite |
+| Backend | Python, FastAPI, SQLAlchemy, PostgreSQL, Alembic |
 | Frontend | React (Vite) |
 | API docs | Auto-generated via FastAPI (Swagger UI + ReDoc) |
 
@@ -25,7 +25,7 @@ The app computes days remaining and a restock-by date, and flags anything runnin
 
 ```
 supplement-restock-predictor/
-├── backend/          # FastAPI REST API + SQLite database
+├── backend/          # FastAPI REST API + PostgreSQL database
 │   ├── main.py        # App entrypoint, route handlers
 │   ├── database.py    # SQLAlchemy engine/session setup
 │   ├── models.py       # ORM table definitions
@@ -37,7 +37,7 @@ supplement-restock-predictor/
     ├── src/
     │   ├── api.js           # Fetch wrapper for backend calls
     │   ├── App.jsx           # Top-level state and layout
-    │   └── components/       # SupplementList, SupplementCard, SupplementForm and their corresponding .css files
+    │   └── components/       # SupplementList, SupplementCard, SupplementForm
     └── package.json
 ```
 
@@ -55,7 +55,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-The API runs at `http://127.0.0.1:8000`. A `supplements.db` SQLite file is created automatically on first run. Interactive API docs are at `http://127.0.0.1:8000/docs`.
+The API runs at `http://127.0.0.1:8000`. See `backend/README.md` for the full Postgres + Alembic setup (Docker Compose is included for local dev). Interactive API docs are at `http://127.0.0.1:8000/docs`.
 
 ### 2. Frontend
 
@@ -93,10 +93,7 @@ Full request/response schemas are viewable at `/docs` while the backend is runni
 
 ## Roadmap / ideas
 
-- [ ] Email notifications/reminders before running out
+- [ ] Notifications/reminders before running out
 - [ ] Sort/filter by status or name
 - [ ] Multi-user support with auth
-- [ ] Display possible restock sources (brick and mortar, or online)
-- [ ] Support for hyperlinks and plaintext in restock sources
 - [ ] Deploy backend + frontend so it's usable outside localhost
-- [ ] Implement additional information reporting such as cost/dose
