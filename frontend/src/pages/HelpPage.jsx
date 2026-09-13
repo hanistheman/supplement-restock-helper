@@ -20,7 +20,7 @@ export default function ShelfControls({ search, onSearchChange, sortBy, onSortCh
     <div className="flex gap-2.5 mb-5 flex-wrap">
       <input
         type="text"
-        className="flex-1 min-w-[180px] font-body text-sm border border-line rounded-lg px-3 py-2.5 bg-paper text-ink focus:outline-none focus:border-accent"
+        className="flex-1 min-w-45 font-body text-sm border border-line rounded-lg px-3 py-2.5 bg-paper text-ink focus:outline-none focus:border-accent"
         placeholder="Search supplements…"
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
