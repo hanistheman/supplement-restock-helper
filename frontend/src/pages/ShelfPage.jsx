@@ -89,20 +89,27 @@ export default function ShelfPage() {
   const editingSupplement = supplements.find((s) => s.id === editingId) ?? null;
 
   return (
-    <div className="page">
-      <header className="page-header">
+    <div className="max-w-3xl mx-auto px-6 pt-14 pb-24">
+      <header className="flex items-end justify-between gap-4 flex-wrap mb-10">
         <div>
-          <p className="eyebrow">Personal stock room</p>
-          <h1>Supplement Restock Tracker</h1>
+          <p className="font-mono text-xs tracking-widest uppercase text-accent mb-1.5">
+            Personal stock room
+          </p>
+          <h1 className="font-display text-3xl font-semibold tracking-tight m-0">
+            Supplement Restock Tracker
+          </h1>
         </div>
-        <button className="btn btn-primary" onClick={() => setFormOpen(true)}>
+        <button
+          className="bg-accent text-white font-semibold text-sm rounded-lg px-4.5 py-2.5 hover:shadow-lg hover:shadow-accent/25 active:translate-y-px transition"
+          onClick={() => setFormOpen(true)}
+        >
           + Add supplement
         </button>
       </header>
 
-      {loading && <p className="status-text">Loading your shelf…</p>}
+      {loading && <p className="font-mono text-sm text-ink-soft">Loading your shelf…</p>}
       {error && (
-        <p className="status-text status-error">
+        <p className="font-mono text-sm text-critical">
           Couldn't reach the server — is the backend running on port 8000?
         </p>
       )}

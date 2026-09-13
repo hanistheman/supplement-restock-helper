@@ -3,7 +3,6 @@ import NavBar from "./components/NavBar";
 import ShelfPage from "./pages/ShelfPage";
 import AboutPage from "./pages/AboutPage";
 import HelpPage from "./pages/HelpPage";
-import "./App.css";
 
 export default function App() {
   return (

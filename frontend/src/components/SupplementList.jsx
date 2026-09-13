@@ -1,12 +1,13 @@
 import SupplementCard from "./SupplementCard";
-import "./SupplementList.css";
 
 export default function SupplementList({ supplements, onEdit, onDelete, onRestock, onAddSource, onRemoveSource, isFiltered = false }) {
   if (supplements.length === 0) {
     return (
-      <div className="empty-state">
-        <p className="empty-title">{isFiltered ? "No matches." : "Shelf's empty."}</p>
-        <p className="empty-body">
+      <div className="border border-dashed border-line rounded-xl px-6 py-12 text-center bg-paper">
+        <p className="font-display text-xl font-semibold mb-1.5">
+          {isFiltered ? "No matches." : "Shelf's empty."}
+        </p>
+        <p className="text-ink-soft text-sm m-0">
           {isFiltered
             ? "Try a different search term or status filter."
             : "Add a supplement to start tracking when you'll run out."}
@@ -16,7 +17,7 @@ export default function SupplementList({ supplements, onEdit, onDelete, onRestoc
   }
 
   return (
-    <div className="supplement-list">
+    <div className="flex flex-col gap-3.5">
       {supplements.map((s) => (
         <SupplementCard
           key={s.id}
