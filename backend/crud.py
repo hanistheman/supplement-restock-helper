@@ -11,17 +11,35 @@ import models
 import schemas
 
 
-def get_supplement(db: Session, supplement_id: int) -> models.Supplement | None:
-    return db.get(models.Supplement, supplement_id)
+def get_supplement(db: Session, supplement_id: int, user_id: int) -> models.Supplement | None:
+    return (
+        db.query(models.Supplement)
+        .filter(models.Supplement.id == supplement_id, models.Supplement.user_id == user_id)
+        .first()
+    )
 
 
-def get_supplements(db: Session) -> list[models.Supplement]:
-    return list(db.scalars(select(models.Supplement)))
+def get_supplements(db: Session, user_id: int) -> list[models.Supplement]:
+    return list(
+        db.scalars(select(models.Supplement).where(models.Supplement.user_id == user_id))
+    )
 
 
-def create_supplement(db: Session, supplement: schemas.SupplementCreate) -> models.Supplement:
+def get_user_by_email(db: Session, email: str) -> models.User | None:
+    return db.query(models.User).filter(models.User.email == email).first()
+
+
+def create_user(db: Session, email: str, hashed_password: str) -> models.User:
+    db_user = models.User(email=email, hashed_password=hashed_password)
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
+def create_supplement(db: Session, user_id: int, supplement: schemas.SupplementCreate) -> models.Supplement:
     data = supplement.model_dump(exclude={"sources"})
-    db_supplement = models.Supplement(**data)
+    db_supplement = models.Supplement(**data, user_id=user_id)
     # Convert each SourceCreate into a Source row and attach via the
     # relationship — SQLAlchemy handles the supplement_id FK automatically
     # once this object is added to the session.
@@ -42,8 +60,13 @@ def add_source(db: Session, db_supplement: models.Supplement, source: schemas.So
     return db_supplement
 
 
-def get_source(db: Session, source_id: int) -> models.Source | None:
-    return db.get(models.Source, source_id)
+def get_source(db: Session, source_id: int, user_id: int) -> models.Source | None:
+    return (
+        db.query(models.Source)
+        .join(models.Supplement)
+        .filter(models.Source.id == source_id, models.Supplement.user_id == user_id)
+        .first()
+    )
 
 
 def delete_source(db: Session, db_source: models.Source) -> None:
