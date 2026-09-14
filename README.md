@@ -17,7 +17,7 @@ The app computes days remaining and a restock-by date, and flags anything runnin
 
 | Layer | Tech |
 |---|---|
-| Backend | Python, FastAPI, SQLAlchemy, PostgreSQL, Alembic |
+| Backend | Python, FastAPI, SQLAlchemy, PostgreSQL, Alembic, JWT auth (bcrypt + python-jose) |
 | Frontend | React (Vite) |
 | API docs | Auto-generated via FastAPI (Swagger UI + ReDoc) |
 
@@ -69,6 +69,10 @@ npm run dev
 
 Open `http://localhost:5173`. The frontend expects the backend to be running at `http://127.0.0.1:8000` (configurable in `frontend/src/api.js`).
 
+## Accounts
+
+Each user has their own private set of supplements — sign up, log in, and only you can see or modify your own data. See `backend/README.md` for the auth endpoints and how tokens work.
+
 ## API reference
 
 | Method | Path | Description |
@@ -95,5 +99,4 @@ Full request/response schemas are viewable at `/docs` while the backend is runni
 
 - [ ] Notifications/reminders before running out
 - [ ] Sort/filter by status or name
-- [ ] Multi-user support with auth
 - [ ] Deploy backend + frontend so it's usable outside localhost
