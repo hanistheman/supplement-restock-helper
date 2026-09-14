@@ -8,8 +8,30 @@ Naming convention used here:
 - SupplementUpdate -> what the client sends on PUT (all fields optional)
 - SupplementOut    -> what the API returns (adds id + computed fields)
 """
-from datetime import date
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from datetime import date, datetime
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, EmailStr
+
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=72)
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class UserOut(BaseModel):
+    id: int
+    email: str
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
 
 
 class SourceBase(BaseModel):
