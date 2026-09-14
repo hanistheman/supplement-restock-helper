@@ -8,21 +8,34 @@ They often look similar but they don't have to match, and keeping them
 separate means you can change your DB schema without automatically
 changing your API contract (and vice versa).
 """
-from sqlalchemy import Integer, String, Float, Date, ForeignKey
+from sqlalchemy import Integer, String, Float, Date, ForeignKey, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped["DateTime"] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    supplements: Mapped[list["Supplement"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
 
 
 class Supplement(Base):
     __tablename__ = "supplements"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
     start_date: Mapped[Date] = mapped_column(Date, nullable=False)
     total_doses: Mapped[int] = mapped_column(Integer, nullable=False)
     doses_per_day: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
     notes: Mapped[str | None] = mapped_column(String, nullable=True)
 
+    owner: Mapped["User"] = relationship(back_populates="supplements")
     sources: Mapped[list["Source"]] = relationship(
         back_populates="supplement", cascade="all, delete-orphan", order_by="Source.id"
     )
