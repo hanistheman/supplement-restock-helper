@@ -96,6 +96,30 @@ Accounts are per-user; every supplement and source belongs to exactly one user a
 - `alembic/` — schema migrations
 - `docker-compose.yml` — local Postgres for development
 
+## Testing
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Tests use a **separate** `supplement_tracker_test` Postgres database (never your dev database), so running them can't wipe real data. Create it once:
+
+```bash
+docker exec -it supplement_tracker_db psql -U supplement_user -c "CREATE DATABASE supplement_tracker_test;"
+```
+
+Then run the suite:
+
+```bash
+pytest
+```
+
+- `tests/test_logic.py` — pure date-math functions (days remaining, restock date, status buckets), no DB needed
+- `tests/test_auth.py` — registration, login, token validation
+- `tests/test_supplements.py` — CRUD behavior and, critically, **cross-user data isolation**: confirms one user can never see, edit, or delete another user's supplements or sources
+
+Tables are created fresh each test session and truncated between individual tests, so tests never interfere with each other or leave stale data behind.
+
 ## A note on production-readiness
 
 This is a solid foundation, but a few things worth doing before deploying somewhere public:
