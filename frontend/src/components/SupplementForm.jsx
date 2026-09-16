@@ -117,7 +117,7 @@ export default function SupplementForm({ title, initial, onSubmit, onClose }) {
 
           <div className={labelClass}>
             How often
-            <div className="grid grid-cols-[1fr_auto_1fr_auto] gap-1.5 items-center">
+            <div className="flex flex-wrap items-center gap-2">
               <input
                 type="number"
                 required
@@ -125,10 +125,10 @@ export default function SupplementForm({ title, initial, onSubmit, onClose }) {
                 step="0.25"
                 value={values.dose_amount}
                 onChange={handleChange("dose_amount")}
-                className={`${inputClass} text-center`}
+                className={`${inputClass} text-center w-24 shrink-0`}
                 aria-label="Dose amount"
               />
-              <span className="text-xs text-ink-soft whitespace-nowrap">dose(s), every</span>
+              <span className="text-xs text-ink-soft whitespace-nowrap shrink-0">dose(s), every</span>
               <input
                 type="number"
                 required
@@ -136,13 +136,13 @@ export default function SupplementForm({ title, initial, onSubmit, onClose }) {
                 step="1"
                 value={values.frequency_count}
                 onChange={handleChange("frequency_count")}
-                className={`${inputClass} text-center`}
+                className={`${inputClass} text-center w-16 shrink-0`}
                 aria-label="Frequency count"
               />
               <select
                 value={values.frequency_unit}
                 onChange={handleChange("frequency_unit")}
-                className={inputClass}
+                className={`${inputClass} w-24 shrink-0`}
                 aria-label="Frequency unit"
               >
                 {FREQUENCY_UNITS.map((u) => (
