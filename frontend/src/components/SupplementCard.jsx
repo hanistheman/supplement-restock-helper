@@ -72,7 +72,7 @@ export default function SupplementCard({ supplement, onEdit, onDelete, onRestock
 
   return (
     <article className={`bg-paper rounded-xl border border-line border-l-4 ${BORDER_BY_STATUS[status]} px-5.5 py-5 flex justify-between items-center gap-5 flex-wrap`}>
-      <div className="flex-1 min-w-55">
+      <div className="flex-1 min-w-[220px]">
         <div className="flex items-center gap-2.5 mb-1">
           <h2 className="font-display text-[19px] font-semibold m-0">{name}</h2>
           <span className={`font-mono text-[11px] tracking-wider uppercase px-2 py-0.5 rounded-full ${BADGE_BY_STATUS[status]}`}>
@@ -90,7 +90,7 @@ export default function SupplementCard({ supplement, onEdit, onDelete, onRestock
           aria-label={`${Math.max(days_remaining, 0)} days of supply remaining`}
         >
           <div
-            className={`h-full rounded-full transition-[width] duration-400 ${FILL_BY_STATUS[status]}`}
+            className={`h-full rounded-full transition-[width] duration-[400ms] ${FILL_BY_STATUS[status]}`}
             style={{ width: `${fillPct}%` }}
           />
         </div>

@@ -87,7 +87,7 @@ export default function SupplementForm({ title, initial, onSubmit, onClose }) {
       onClick={onClose}
     >
       <div
-        className="bg-paper rounded-2xl p-7 w-full max-w-105 shadow-2xl shadow-ink/25"
+        className="bg-paper rounded-2xl p-7 w-full max-w-[420px] shadow-2xl shadow-ink/25"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="font-display text-xl mb-4.5 mt-0">{title}</h2>
