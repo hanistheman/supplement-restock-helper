@@ -31,6 +31,8 @@ const FILL_BY_STATUS = {
   overdue: "bg-critical",
 };
 
+const UNIT_LABEL = { day: "day", week: "week", month: "month", year: "year" };
+
 function formatDate(iso) {
   return new Date(iso + "T00:00:00").toLocaleDateString(undefined, {
     month: "short",
@@ -38,23 +40,49 @@ function formatDate(iso) {
   });
 }
 
-export default function SupplementCard({ supplement, onEdit, onDelete, onRestock, onAddSource, onRemoveSource }) {
-  const { name, notes, days_remaining, restock_date, status, total_doses, doses_per_day, sources } = supplement;
+function formatFrequency(doseAmount, frequencyCount, frequencyUnit) {
+  const dosePart = doseAmount === 1 ? "1 dose" : `${doseAmount} doses`;
+  const unit = UNIT_LABEL[frequencyUnit] ?? frequencyUnit;
+  if (frequencyCount === 1) return `${dosePart}, every ${unit}`;
+  return `${dosePart}, ${frequencyCount}x per ${unit}`;
+}
 
-  const totalDaysSupply = total_doses / doses_per_day;
+export default function SupplementCard({ supplement, onEdit, onDelete, onRestock, onAddSource, onRemoveSource }) {
+  const {
+    name,
+    notes,
+    days_remaining,
+    restock_date,
+    status,
+    total_doses,
+    dose_amount,
+    frequency_count,
+    frequency_unit,
+    sources,
+  } = supplement;
+
+  // The progress bar needs "total days of supply" as a denominator, which
+  // isn't returned directly by the API — so it's reconstructed here from
+  // the same frequency fields the backend used to compute days_remaining.
+  const daysPerUnit = { day: 1, week: 7, month: 30.44, year: 365.25 }[frequency_unit] ?? 1;
+  const dosesPerDay = (dose_amount * frequency_count) / daysPerUnit;
+  const totalDaysSupply = total_doses / dosesPerDay;
   // Clamp so an overdue supplement still shows a spent-down bar rather than a negative one.
   const fillPct = Math.max(0, Math.min(1, days_remaining / totalDaysSupply)) * 100;
 
   return (
     <article className={`bg-paper rounded-xl border border-line border-l-4 ${BORDER_BY_STATUS[status]} px-5.5 py-5 flex justify-between items-center gap-5 flex-wrap`}>
-      <div className="flex-1 min-w-[220px]">
+      <div className="flex-1 min-w-55">
         <div className="flex items-center gap-2.5 mb-1">
           <h2 className="font-display text-[19px] font-semibold m-0">{name}</h2>
           <span className={`font-mono text-[11px] tracking-wider uppercase px-2 py-0.5 rounded-full ${BADGE_BY_STATUS[status]}`}>
             {STATUS_LABEL[status]}
           </span>
         </div>
-        {notes && <p className="text-ink-soft text-[13px] mb-3 mt-0">{notes}</p>}
+        {notes && <p className="text-ink-soft text-[13px] mb-1 mt-0">{notes}</p>}
+        <p className="text-ink-soft text-xs mb-3 mt-0">
+          {formatFrequency(dose_amount, frequency_count, frequency_unit)}
+        </p>
 
         <div
           className="h-2.5 rounded-full bg-accent-soft overflow-hidden my-3 max-w-80"
@@ -62,7 +90,7 @@ export default function SupplementCard({ supplement, onEdit, onDelete, onRestock
           aria-label={`${Math.max(days_remaining, 0)} days of supply remaining`}
         >
           <div
-            className={`h-full rounded-full transition-[width] duration-[400ms] ${FILL_BY_STATUS[status]}`}
+            className={`h-full rounded-full transition-[width] duration-400 ${FILL_BY_STATUS[status]}`}
             style={{ width: `${fillPct}%` }}
           />
         </div>

@@ -14,11 +14,11 @@ export default function AboutPage() {
       <h2 className="font-display text-lg font-semibold mt-8 mb-2.5">How the math works</h2>
       <p>
         Every supplement is defined by three things: the date you started the
-        current bottle, the total number of doses it contains, and how many
-        doses you take per day. From that, the app computes:
+        current bottle, the total number of doses it contains, and how often
+        you take it — daily, weekly, monthly, or yearly. From that, the app computes:
       </p>
       <ul className="pl-5 m-0 [&>li+li]:mt-2">
-        <li><strong>Days remaining</strong> — total doses ÷ doses per day, minus days elapsed since you started.</li>
+        <li><strong>Days remaining</strong> — total doses ÷ your daily consumption rate (converted from however often you actually take it), minus days elapsed since you started.</li>
         <li><strong>Restock-by date</strong> — the calendar date your supply is projected to run out.</li>
         <li><strong>Status</strong> — a simple bucket (on hand, running low, critical, overdue) based on days remaining.</li>
       </ul>

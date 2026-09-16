@@ -4,9 +4,18 @@ const emptyForm = {
   name: "",
   start_date: new Date().toISOString().slice(0, 10),
   total_doses: "",
-  doses_per_day: "1",
+  dose_amount: "1",
+  frequency_count: "1",
+  frequency_unit: "day",
   notes: "",
 };
+
+const FREQUENCY_UNITS = [
+  { value: "day", label: "day" },
+  { value: "week", label: "week" },
+  { value: "month", label: "month" },
+  { value: "year", label: "year" },
+];
 
 const labelClass = "flex flex-col gap-1.5 text-[13px] font-semibold text-ink-soft";
 const inputClass =
@@ -20,7 +29,9 @@ export default function SupplementForm({ title, initial, onSubmit, onClose }) {
           name: initial.name,
           start_date: initial.start_date,
           total_doses: String(initial.total_doses),
-          doses_per_day: String(initial.doses_per_day),
+          dose_amount: String(initial.dose_amount),
+          frequency_count: String(initial.frequency_count),
+          frequency_unit: initial.frequency_unit,
           notes: initial.notes ?? "",
         }
       : emptyForm
@@ -53,7 +64,9 @@ export default function SupplementForm({ title, initial, onSubmit, onClose }) {
         name: values.name.trim(),
         start_date: values.start_date,
         total_doses: Number(values.total_doses),
-        doses_per_day: Number(values.doses_per_day),
+        dose_amount: Number(values.dose_amount),
+        frequency_count: Number(values.frequency_count),
+        frequency_unit: values.frequency_unit,
         notes: values.notes.trim() || null,
       };
       if (!isEditing) {
@@ -74,7 +87,7 @@ export default function SupplementForm({ title, initial, onSubmit, onClose }) {
       onClick={onClose}
     >
       <div
-        className="bg-paper rounded-2xl p-7 w-full max-w-[420px] shadow-2xl shadow-ink/25"
+        className="bg-paper rounded-2xl p-7 w-full max-w-105 shadow-2xl shadow-ink/25"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="font-display text-xl mb-4.5 mt-0">{title}</h2>
@@ -91,29 +104,55 @@ export default function SupplementForm({ title, initial, onSubmit, onClose }) {
             />
           </label>
 
-          <div className="grid grid-cols-2 gap-3.5">
-            <label className={labelClass}>
-              Bottle started
-              <input
-                type="date"
-                required
-                value={values.start_date}
-                onChange={handleChange("start_date")}
-                className={inputClass}
-              />
-            </label>
-            <label className={labelClass}>
-              Doses per day
+          <label className={labelClass}>
+            Bottle started
+            <input
+              type="date"
+              required
+              value={values.start_date}
+              onChange={handleChange("start_date")}
+              className={inputClass}
+            />
+          </label>
+
+          <div className={labelClass}>
+            How often
+            <div className="grid grid-cols-[1fr_auto_1fr_auto] gap-1.5 items-center">
               <input
                 type="number"
                 required
                 min="0.25"
                 step="0.25"
-                value={values.doses_per_day}
-                onChange={handleChange("doses_per_day")}
-                className={inputClass}
+                value={values.dose_amount}
+                onChange={handleChange("dose_amount")}
+                className={`${inputClass} text-center`}
+                aria-label="Dose amount"
               />
-            </label>
+              <span className="text-xs text-ink-soft whitespace-nowrap">dose(s), every</span>
+              <input
+                type="number"
+                required
+                min="1"
+                step="1"
+                value={values.frequency_count}
+                onChange={handleChange("frequency_count")}
+                className={`${inputClass} text-center`}
+                aria-label="Frequency count"
+              />
+              <select
+                value={values.frequency_unit}
+                onChange={handleChange("frequency_unit")}
+                className={inputClass}
+                aria-label="Frequency unit"
+              >
+                {FREQUENCY_UNITS.map((u) => (
+                  <option key={u.value} value={u.value}>{u.label}(s)</option>
+                ))}
+              </select>
+            </div>
+            <span className="text-xs font-normal text-ink-soft">
+              e.g. 1 dose every 1 day, or 2 doses every 1 week
+            </span>
           </div>
 
           <label className={labelClass}>
