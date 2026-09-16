@@ -9,7 +9,10 @@ Naming convention used here:
 - SupplementOut    -> what the API returns (adds id + computed fields)
 """
 from datetime import date, datetime
+from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, EmailStr
+
+FrequencyUnit = Literal["day", "week", "month", "year"]
 
 
 class UserCreate(BaseModel):
@@ -54,7 +57,9 @@ class SupplementBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     start_date: date
     total_doses: int = Field(..., gt=0)
-    doses_per_day: float = Field(default=1.0, gt=0)
+    dose_amount: float = Field(default=1.0, gt=0)
+    frequency_count: float = Field(default=1.0, gt=0)
+    frequency_unit: FrequencyUnit = "day"
     notes: str | None = None
 
 
@@ -67,7 +72,9 @@ class SupplementUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=100)
     start_date: date | None = None
     total_doses: int | None = Field(default=None, gt=0)
-    doses_per_day: float | None = Field(default=None, gt=0)
+    dose_amount: float | None = Field(default=None, gt=0)
+    frequency_count: float | None = Field(default=None, gt=0)
+    frequency_unit: FrequencyUnit | None = None
     notes: str | None = None
 
 
