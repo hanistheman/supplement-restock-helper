@@ -8,7 +8,48 @@ from datetime import date
 
 import pytest
 
-from logic import days_remaining, restock_date, status_for
+from logic import days_remaining, restock_date, status_for, doses_per_day_from_frequency
+
+
+class TestDosesPerDayFromFrequency:
+    def test_once_daily_is_unchanged(self):
+        # 1 dose, once per day -> 1 dose/day (matches old plain doses_per_day behavior).
+        assert doses_per_day_from_frequency(1, 1, "day") == 1
+
+    def test_multiple_doses_daily(self):
+        assert doses_per_day_from_frequency(2, 3, "day") == 6
+
+    def test_once_weekly(self):
+        assert doses_per_day_from_frequency(1, 1, "week") == pytest.approx(1 / 7)
+
+    def test_multiple_times_per_week(self):
+        # 2 doses, 3 times a week -> 6 doses / 7 days.
+        assert doses_per_day_from_frequency(2, 3, "week") == pytest.approx(6 / 7)
+
+    def test_once_monthly(self):
+        assert doses_per_day_from_frequency(1, 1, "month") == pytest.approx(1 / 30.44)
+
+    def test_once_yearly(self):
+        assert doses_per_day_from_frequency(1, 1, "year") == pytest.approx(1 / 365.25)
+
+    def test_unknown_unit_raises(self):
+        with pytest.raises(ValueError):
+            doses_per_day_from_frequency(1, 1, "fortnight")
+
+    def test_zero_dose_amount_raises(self):
+        with pytest.raises(ValueError):
+            doses_per_day_from_frequency(0, 1, "day")
+
+    def test_zero_frequency_count_raises(self):
+        with pytest.raises(ValueError):
+            doses_per_day_from_frequency(1, 0, "day")
+
+    def test_feeds_correctly_into_days_remaining(self):
+        # 2 capsules, once a week -> ~0.2857 doses/day. A 30-dose bottle
+        # should last roughly 105 days (30 / (2/7)).
+        rate = doses_per_day_from_frequency(2, 1, "week")
+        result = days_remaining(date(2026, 1, 1), 30, rate, today=date(2026, 1, 1))
+        assert result == 105
 
 
 class TestDaysRemaining:

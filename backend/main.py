@@ -67,16 +67,19 @@ def read_current_user(current_user: models.User = Depends(get_current_user)):
 
 def _to_out(s: models.Supplement) -> schemas.SupplementOut:
     """Attach the computed fields (days_remaining, restock_date, status) before returning."""
-    days_left = logic.days_remaining(s.start_date, s.total_doses, s.doses_per_day)
+    doses_per_day = logic.doses_per_day_from_frequency(s.dose_amount, s.frequency_count, s.frequency_unit)
+    days_left = logic.days_remaining(s.start_date, s.total_doses, doses_per_day)
     return schemas.SupplementOut(
         id=s.id,
         name=s.name,
         start_date=s.start_date,
         total_doses=s.total_doses,
-        doses_per_day=s.doses_per_day,
+        dose_amount=s.dose_amount,
+        frequency_count=s.frequency_count,
+        frequency_unit=s.frequency_unit,
         notes=s.notes,
         days_remaining=days_left,
-        restock_date=logic.restock_date(s.start_date, s.total_doses, s.doses_per_day),
+        restock_date=logic.restock_date(s.start_date, s.total_doses, doses_per_day),
         status=logic.status_for(days_left),
         sources=[schemas.SourceOut.model_validate(src) for src in s.sources],
     )

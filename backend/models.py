@@ -32,7 +32,14 @@ class Supplement(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     start_date: Mapped[Date] = mapped_column(Date, nullable=False)
     total_doses: Mapped[int] = mapped_column(Integer, nullable=False)
-    doses_per_day: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
+    # How often the supplement is taken: "take {dose_amount} doses,
+    # {frequency_count} times per {frequency_unit}" — e.g. 2 capsules, 3
+    # times per week. doses_per_day is derived from these at read time
+    # (see logic.doses_per_day_from_frequency), not stored, consistent with
+    # how days_remaining/restock_date/status are already computed on read.
+    dose_amount: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
+    frequency_count: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
+    frequency_unit: Mapped[str] = mapped_column(String, nullable=False, default="day")
     notes: Mapped[str | None] = mapped_column(String, nullable=True)
 
     owner: Mapped["User"] = relationship(back_populates="supplements")

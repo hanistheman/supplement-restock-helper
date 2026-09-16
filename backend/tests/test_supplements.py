@@ -11,7 +11,14 @@ def _create_supplement(client, headers, name="Vitamin D3"):
     res = client.post(
         "/supplements",
         headers=headers,
-        json={"name": name, "start_date": "2026-01-01", "total_doses": 90, "doses_per_day": 1},
+        json={
+            "name": name,
+            "start_date": "2026-01-01",
+            "total_doses": 90,
+            "dose_amount": 1,
+            "frequency_count": 1,
+            "frequency_unit": "day",
+        },
     )
     assert res.status_code == 201
     return res.json()
@@ -111,3 +118,26 @@ def test_restock_updates_start_date(client, auth_headers):
     res = client.post(f"/supplements/{supplement['id']}/restock", headers=headers)
     assert res.status_code == 200
     assert res.json()["days_remaining"] == 90  # freshly restocked, full 90 days
+
+
+def test_weekly_frequency_computes_correctly(client, auth_headers):
+    from datetime import date
+
+    headers = auth_headers()
+    res = client.post(
+        "/supplements",
+        headers=headers,
+        json={
+            "name": "Vitamin B12 Shot",
+            "start_date": date.today().isoformat(),
+            "total_doses": 10,
+            "dose_amount": 1,
+            "frequency_count": 1,
+            "frequency_unit": "week",
+        },
+    )
+    assert res.status_code == 201
+    body = res.json()
+    # 10 doses, 1/week -> 70 days of supply, none elapsed yet (started today).
+    assert body["days_remaining"] == 70
+    assert body["frequency_unit"] == "week"
