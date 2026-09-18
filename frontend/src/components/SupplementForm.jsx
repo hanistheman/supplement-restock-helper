@@ -156,7 +156,7 @@ export default function SupplementForm({ title, initial, onSubmit, onClose }) {
           </div>
 
           <label className={labelClass}>
-            Total doses in bottle
+            Total doses in container
             <input
               type="number"
               required
