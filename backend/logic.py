@@ -65,4 +65,3 @@ def status_for(days_left: int) -> str:
     if days_left <= 7:
         return "low"
     return "ok"
-

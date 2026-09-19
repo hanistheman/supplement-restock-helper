@@ -1,4 +1,6 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+import os
+
+from fastapi import FastAPI, Depends, HTTPException, status, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -14,6 +16,7 @@ from auth import (
     create_access_token,
     get_current_user,
 )
+from notifications import run_low_stock_check
 
 # Schema is now managed by Alembic migrations (see alembic/), not by
 # create_all() — run `alembic upgrade head` before starting the app.
@@ -58,6 +61,36 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 @app.get("/auth/me", response_model=schemas.UserOut)
 def read_current_user(current_user: models.User = Depends(get_current_user)):
     return current_user
+
+
+@app.patch("/auth/me/notifications", response_model=schemas.UserOut)
+def update_notification_settings(
+    settings: schemas.NotificationSettingsUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    current_user.notifications_enabled = settings.notifications_enabled
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+# ---------------------------------------------------------------------------
+# Notifications — triggered externally (a scheduled job, hosted cron, etc.),
+# not by a logged-in user, so this is protected by a shared secret header
+# rather than the usual per-user JWT auth.
+# ---------------------------------------------------------------------------
+
+def _verify_notifications_secret(x_notifications_secret: str = Header(default="")):
+    expected = os.getenv("NOTIFICATIONS_SECRET")
+    if not expected or x_notifications_secret != expected:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or missing notifications secret")
+
+
+@app.post("/notifications/run", dependencies=[Depends(_verify_notifications_secret)])
+def trigger_notifications(db: Session = Depends(get_db)):
+    sent = run_low_stock_check(db)
+    return {"emails_sent": sent}
 
 
 # ---------------------------------------------------------------------------

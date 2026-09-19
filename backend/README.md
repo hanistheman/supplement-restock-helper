@@ -96,6 +96,19 @@ Accounts are per-user; every supplement and source belongs to exactly one user a
 - `alembic/` — schema migrations
 - `docker-compose.yml` — local Postgres for development
 
+## Notifications
+
+Users with `notifications_enabled` (default on) get a single consolidated email listing anything at `low`/`critical`/`overdue` status.
+
+- **Sending**: plain SMTP via `email_service.py` — works with Gmail app passwords, a provider's SMTP relay, or Mailtrap for testing. If `SMTP_HOST` is unset, emails print to the console instead — so local dev and tests never need real credentials.
+- **Triggering**: `POST /notifications/run`, protected by a shared secret in the `X-Notifications-Secret` header (not user auth — this is meant to be called by an external scheduler, not a logged-in user). Point a scheduled job (a hosted cron service, a scheduled GitHub Actions workflow, etc.) at this endpoint once deployed.
+- **Opting out**: `PATCH /auth/me/notifications` with `{"notifications_enabled": false}`.
+
+| Method | Path | Description |
+|---|---|---|
+| PATCH | `/auth/me/notifications` | Toggle the current user's notification preference (requires auth) |
+| POST | `/notifications/run` | Run the low-stock check and send emails (requires `X-Notifications-Secret` header) |
+
 ## Testing
 
 ```bash

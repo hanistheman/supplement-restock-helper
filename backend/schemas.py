@@ -28,8 +28,13 @@ class UserLogin(BaseModel):
 class UserOut(BaseModel):
     id: int
     email: str
+    notifications_enabled: bool
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+
+class NotificationSettingsUpdate(BaseModel):
+    notifications_enabled: bool
 
 
 class Token(BaseModel):

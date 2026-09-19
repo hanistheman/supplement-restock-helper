@@ -8,7 +8,7 @@ They often look similar but they don't have to match, and keeping them
 separate means you can change your DB schema without automatically
 changing your API contract (and vice versa).
 """
-from sqlalchemy import Integer, String, Float, Date, ForeignKey, DateTime, func
+from sqlalchemy import Integer, String, Float, Date, ForeignKey, DateTime, Boolean, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
 
@@ -19,6 +19,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
+    notifications_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped["DateTime"] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     supplements: Mapped[list["Supplement"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
