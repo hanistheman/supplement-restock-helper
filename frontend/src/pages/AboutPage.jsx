@@ -8,7 +8,7 @@ export default function AboutPage() {
         of each supplement you have left, so you're never caught reaching for
         an empty bottle. Instead of logging every single dose, you tell it when
         you opened a bottle and how fast you're going through it — it does the
-        math from there.
+        math from there and will remind you when you should restock.
       </p>
 
       <h2 className="font-display text-lg font-semibold mt-8 mb-2.5">How the math works</h2>

@@ -9,7 +9,7 @@ const FAQS = [
   },
   {
     q: "My supplement isn't daily — can I track that?",
-    a: "Yes. \"How often\" lets you set doses per day, week, month, or year — e.g. \"1 dose every week\" for a weekly injection, or \"2 doses, 3x per week\" for something you take three times a week.",
+    a: "Yes. \"How often\" lets you set doses per day, week, month, or year — e.g. \"1 dose every week\" for weekly consumption, or \"2 doses, 3x per week\" for something you take three times a week.",
   },
   {
     q: "What happens when I click \"Restocked today\"?",
