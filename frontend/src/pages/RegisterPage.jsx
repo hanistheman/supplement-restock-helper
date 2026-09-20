@@ -7,12 +7,24 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Only show the mismatch warning once the person has actually typed
+  // something in the confirm field — showing it while it's still empty
+  // would just be noise before they've had a chance to type.
+  const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
+    if (password !== confirmPassword) {
+      setError("Passwords don't match.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       await register(email, password);
@@ -55,11 +67,29 @@ export default function RegisterPage() {
           <span className="text-xs font-normal text-ink-soft">At least 8 characters.</span>
         </label>
 
+        <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-ink-soft">
+          Confirm password
+          <input
+            type="password"
+            required
+            minLength={8}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className={`font-body text-sm font-normal text-ink border rounded-lg px-2.5 py-2 bg-paper focus:outline-none ${
+              passwordsMismatch ? "border-critical focus:border-critical" : "border-line focus:border-accent"
+            }`}
+            aria-invalid={passwordsMismatch}
+          />
+          {passwordsMismatch && (
+            <span className="text-xs font-normal text-critical">Passwords don't match.</span>
+          )}
+        </label>
+
         {error && <p className="text-critical text-[13px] m-0">{error}</p>}
 
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || passwordsMismatch}
           className="bg-accent text-white font-semibold text-sm rounded-lg px-4.5 py-2.5 hover:shadow-lg hover:shadow-accent/25 active:translate-y-px transition disabled:opacity-60 mt-1"
         >
           {submitting ? "Creating account…" : "Sign up"}
