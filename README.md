@@ -98,5 +98,8 @@ Full request/response schemas are viewable at `/docs` while the backend is runni
 ## Roadmap / ideas
 
 - [ ] Notifications/reminders before running out
+- [ ] A page to report issues to me
+- [ ] Landing page for this site
 - [ ] Sort/filter by status or name
 - [ ] Deploy backend + frontend so it's usable outside localhost
+- [ ] Ensure database is accessible all the time (serverless PostgreSQL database)
