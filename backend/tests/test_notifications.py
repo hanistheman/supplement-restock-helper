@@ -3,6 +3,7 @@ Tests for the notification system: who gets selected for a low-stock
 email, what the email says, and that the trigger endpoint is properly
 secured against unauthorized calls.
 """
+import smtplib
 from datetime import date, timedelta
 from unittest.mock import patch
 
@@ -86,6 +87,29 @@ class TestRunLowStockCheck:
         mock_send.assert_called_once()
         called_to_email = mock_send.call_args[0][0]
         assert called_to_email == "notify-me@example.com"
+
+    def test_one_failed_send_does_not_abort_the_batch(self, db_session):
+        """An undeliverable mailbox must not stop the other users getting theirs."""
+        first = models.User(email="bounces@example.com", hashed_password="x", notifications_enabled=True)
+        second = models.User(email="delivered@example.com", hashed_password="x", notifications_enabled=True)
+        db_session.add_all([first, second])
+        db_session.commit()
+
+        _make_supplement(db_session, first, "Almost Out", 1)
+        _make_supplement(db_session, second, "Also Almost Out", 1)
+
+        def fake_send(to_email, subject, body):
+            if to_email == "bounces@example.com":
+                raise smtplib.SMTPException("mailbox unavailable")
+            sent_to.append(to_email)
+
+        sent_to = []
+        with patch("notifications.send_email", side_effect=fake_send):
+            sent_count = run_low_stock_check(db_session)
+
+        # Only the healthy mailbox counts as sent, but the loop still reached it.
+        assert sent_count == 1
+        assert sent_to == ["delivered@example.com"]
 
 
 class TestNotificationsEndpoint:

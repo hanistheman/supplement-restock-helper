@@ -100,8 +100,15 @@ Accounts are per-user; every supplement and source belongs to exactly one user a
 
 Users with `notifications_enabled` (default on) get a single consolidated email listing anything at `low`/`critical`/`overdue` status.
 
-- **Sending**: plain SMTP via `email_service.py` — works with Gmail app passwords, a provider's SMTP relay, or Mailtrap for testing. If `SMTP_HOST` is unset, emails print to the console instead — so local dev and tests never need real credentials.
-- **Triggering**: `POST /notifications/run`, protected by a shared secret in the `X-Notifications-Secret` header (not user auth — this is meant to be called by an external scheduler, not a logged-in user). Point a scheduled job (a hosted cron service, a scheduled GitHub Actions workflow, etc.) at this endpoint once deployed.
+- **Sending**: plain SMTP via `email_service.py` — works with Gmail app passwords, a provider's SMTP relay, or Mailtrap for testing. If `SMTP_HOST` is unset, emails print to the console instead — so local dev and tests never need real credentials. For Gmail, `SMTP_FROM_EMAIL` must match `SMTP_USERNAME` exactly or Gmail rejects the message.
+- **Triggering**: `POST /notifications/run`, protected by a shared secret in the `X-Notifications-Secret` header (not user auth — this is meant to be called by an external scheduler, not a logged-in user). The secret is read from the `NOTIFICATIONS_SECRET` env var; **if it is unset the endpoint always returns 401**. Point a scheduled job (a hosted cron service, a scheduled GitHub Actions workflow, etc.) at this endpoint once deployed:
+
+  ```bash
+  curl -X POST http://127.0.0.1:8000/notifications/run \
+    -H "X-Notifications-Secret: $NOTIFICATIONS_SECRET"
+  ```
+
+  It returns `{"emails_sent": N}` — `N` is how many users were actually emailed, so `0` means nobody currently has anything low/critical/overdue.
 - **Opting out**: `PATCH /auth/me/notifications` with `{"notifications_enabled": false}`.
 
 | Method | Path | Description |

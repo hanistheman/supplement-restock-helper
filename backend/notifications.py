@@ -3,11 +3,15 @@ Low-stock notification logic. Kept separate from main.py so it can be
 triggered from a route, a script, or a test without duplicating the
 selection/formatting logic.
 """
+import logging
+
 from sqlalchemy.orm import Session
 
 import models
 import logic
 from email_service import send_email
+
+logger = logging.getLogger(__name__)
 
 # Statuses worth emailing a user about — "ok" is deliberately excluded.
 NOTIFY_STATUSES = {"low", "critical", "overdue"}
@@ -54,6 +58,13 @@ def run_low_stock_check(db: Session) -> int:
         if not low_stock:
             continue
         subject = f"Supplement Tracker: {len(low_stock)} item(s) need restocking"
-        send_email(user.email, subject, build_email_body(low_stock))
+        try:
+            send_email(user.email, subject, build_email_body(low_stock))
+        except Exception:
+            # One undeliverable mailbox or a transient SMTP outage shouldn't
+            # abort the whole batch — log it and keep going so every other
+            # opted-in user still gets their notification.
+            logger.exception("Failed to send low-stock email to %s", user.email)
+            continue
         sent += 1
     return sent

@@ -9,8 +9,17 @@ tests never need real credentials to exercise the notification flow.
 """
 import os
 import smtplib
+import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+import certifi
+from dotenv import load_dotenv
+
+# Loaded here rather than relying on database.py having done it first. This
+# module reads SMTP_* at import time, so it has to be self-sufficient to
+# behave the same however it gets imported (route, script, or test).
+load_dotenv()
 
 SMTP_HOST = os.getenv("SMTP_HOST")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
@@ -36,7 +45,11 @@ def send_email(to_email: str, subject: str, body: str) -> None:
     message.attach(MIMEText(body, "plain"))
 
     with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-        server.starttls()
+        # Explicit verified context: passing none leaves certificate
+        # verification off, which would let a network attacker read the
+        # credentials and message contents in transit. certifi supplies a
+        # current CA bundle the stdlib can't always find on macOS/Windows.
+        server.starttls(context=ssl.create_default_context(cafile=certifi.where()))
         if SMTP_USERNAME and SMTP_PASSWORD:
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
         server.sendmail(SMTP_FROM_EMAIL, to_email, message.as_string())

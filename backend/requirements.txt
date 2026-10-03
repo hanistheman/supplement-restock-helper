@@ -9,3 +9,8 @@ bcrypt==5.0.0
 python-jose[cryptography]==3.5.0
 python-multipart==0.0.32
 email-validator==2.3.0
+email-validator==2.3.0
+# Used explicitly for SMTP TLS verification — the stdlib's default trust store
+# fails on many systems (notably macOS/Windows), and skipping verification
+# entirely would expose the SMTP password to interception.
+certifi==2026.7.22
