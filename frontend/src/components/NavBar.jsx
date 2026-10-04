@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 
 const linkClass = ({ isActive }) =>
@@ -17,12 +17,15 @@ export default function NavBar() {
 
   return (
     <nav className="max-w-3xl mx-auto px-6 pt-6 flex items-center justify-between">
-      <span className="font-mono text-xs tracking-widest uppercase text-ink-soft">
+      <Link
+        to={user ? "/shelf" : "/"}
+        className="font-mono text-xs tracking-widest uppercase text-ink-soft hover:text-accent transition-colors"
+      >
         Supplement Tracker
-      </span>
+      </Link>
       <div className="flex items-center gap-1">
         {user && (
-          <NavLink to="/" end className={linkClass}>Shelf</NavLink>
+          <NavLink to="/shelf" className={linkClass}>Shelf</NavLink>
         )}
         <NavLink to="/help" className={linkClass}>Help</NavLink>
         <NavLink to="/about" className={linkClass}>About</NavLink>
