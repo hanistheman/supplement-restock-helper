@@ -10,7 +10,7 @@ import os
 
 # Point the app at the test database BEFORE importing any app modules,
 # since database.py reads DATABASE_URL at import time.
-os.environ["DATABASE_URL"] = "postgresql+psycopg://postgres:postgres@localhost:5433/supplement_tracker_test"
+os.environ["DATABASE_URL"] = "postgresql+psycopg://postgres:postgres@localhost:5432/supplement_tracker_test"
 os.environ.setdefault("SECRET_KEY", "test-secret-key-not-for-production")
 
 import pytest
