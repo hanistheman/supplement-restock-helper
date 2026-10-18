@@ -62,14 +62,27 @@ uvicorn main:app --reload
 Accounts are per-user; every supplement and source belongs to exactly one user and is invisible to everyone else.
 
 - **Passwords** are hashed with `bcrypt` (via the `bcrypt` package directly — not `passlib`, which has a known incompatibility with modern bcrypt versions)
-- **Tokens** are JWTs, signed with `SECRET_KEY`, valid for 7 days
-- Every `/supplements*` and `/sources*` route requires `Authorization: Bearer <token>` and only ever touches the calling user's own data — attempting to access another user's supplement by ID returns a 404 (not a 403), so IDs can't be used to probe what exists
+- **Access tokens** are short-lived JWTs (15 minutes), signed with `SECRET_KEY`. Short on purpose: it's sent on every request, so a stolen one is only useful briefly.
+- **Refresh tokens** are random opaque strings (not JWTs), valid for 30 days. Only a SHA-256 hash is stored in the `refresh_tokens` table, never the raw value, so a leaked database can't be used to log in as anyone.
+- **Rotation**: every use of a refresh token revokes it and issues a brand new one, so each refresh token works exactly once.
+- **Logout** revokes the refresh token server-side — copying a token out of a browser before logging out doesn't keep it working.
+- Every `/supplements*` and `/sources*` route requires `Authorization: Bearer <access token>` and only ever touches the calling user's own data — attempting to access another user's supplement by ID returns a 404 (not a 403), so IDs can't be used to probe what exists
 
 | Method | Path | Description |
 |---|---|---|
-| POST | `/auth/register` | Create an account (`email`, `password`) |
-| POST | `/auth/login` | Log in (form-encoded `username`/`password` — OAuth2 convention), returns a JWT |
-| GET | `/auth/me` | Get the current user (requires token) |
+| POST | `/auth/register` | Create an account (`email`, `password`). Rate limited: 5/minute per IP |
+| POST | `/auth/login` | Log in (form-encoded `username`/`password` — OAuth2 convention), returns an access + refresh token. Rate limited: 5/minute per IP |
+| POST | `/auth/refresh` | Exchange a refresh token for a new access + refresh token pair (old refresh token is revoked) |
+| POST | `/auth/logout` | Revoke a refresh token server-side |
+| GET | `/auth/me` | Get the current user (requires access token) |
+
+### Rate limiting
+
+`/auth/login` and `/auth/register` are limited to 5 requests per minute per client IP (via `slowapi`), returning `429 Too Many Requests` beyond that. Deliberately applied only to the auth endpoints rather than globally — brute-force protection matters most there, and a blanket limit would punish normal use of the app.
+
+Two things to know before deploying:
+- Limit counters are held **in memory, per process**. That's fine for a single instance, but if you run multiple workers/replicas, each keeps its own count — you'd point `slowapi` at a shared store like Redis instead.
+- Limits are keyed on the client IP as the app sees it. Behind a reverse proxy or load balancer, that can be the proxy's IP for every request unless proxy headers are configured (e.g. uvicorn's `--proxy-headers` with trusted forwarded IPs), which would put all users in one shared bucket.
 
 ## Endpoints (all require auth)
 
@@ -100,15 +113,8 @@ Accounts are per-user; every supplement and source belongs to exactly one user a
 
 Users with `notifications_enabled` (default on) get a single consolidated email listing anything at `low`/`critical`/`overdue` status.
 
-- **Sending**: plain SMTP via `email_service.py` — works with Gmail app passwords, a provider's SMTP relay, or Mailtrap for testing. If `SMTP_HOST` is unset, emails print to the console instead — so local dev and tests never need real credentials. For Gmail, `SMTP_FROM_EMAIL` must match `SMTP_USERNAME` exactly or Gmail rejects the message.
-- **Triggering**: `POST /notifications/run`, protected by a shared secret in the `X-Notifications-Secret` header (not user auth — this is meant to be called by an external scheduler, not a logged-in user). The secret is read from the `NOTIFICATIONS_SECRET` env var; **if it is unset the endpoint always returns 401**. Point a scheduled job (a hosted cron service, a scheduled GitHub Actions workflow, etc.) at this endpoint once deployed:
-
-  ```bash
-  curl -X POST http://127.0.0.1:8000/notifications/run \
-    -H "X-Notifications-Secret: $NOTIFICATIONS_SECRET"
-  ```
-
-  It returns `{"emails_sent": N}` — `N` is how many users were actually emailed, so `0` means nobody currently has anything low/critical/overdue.
+- **Sending**: plain SMTP via `email_service.py` — works with Gmail app passwords, a provider's SMTP relay, or Mailtrap for testing. If `SMTP_HOST` is unset, emails print to the console instead — so local dev and tests never need real credentials.
+- **Triggering**: `POST /notifications/run`, protected by a shared secret in the `X-Notifications-Secret` header (not user auth — this is meant to be called by an external scheduler, not a logged-in user). Point a scheduled job (a hosted cron service, a scheduled GitHub Actions workflow, etc.) at this endpoint once deployed.
 - **Opting out**: `PATCH /auth/me/notifications` with `{"notifications_enabled": false}`.
 
 | Method | Path | Description |
@@ -143,6 +149,6 @@ Tables are created fresh each test session and truncated between individual test
 ## A note on production-readiness
 
 This is a solid foundation, but a few things worth doing before deploying somewhere public:
-- Rate-limit `/auth/login` and `/auth/register` to slow down brute-force/spam attempts
-- Consider shorter-lived access tokens plus a refresh-token flow instead of a single 7-day token
+- Move rate-limit storage to Redis if running more than one process (see above)
 - Add email verification if you want to be confident emails are real
+- Add a password reset flow

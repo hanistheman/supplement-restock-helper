@@ -1,9 +1,12 @@
 import os
 
-from fastapi import FastAPI, Depends, HTTPException, status, Header
+from fastapi import FastAPI, Depends, HTTPException, status, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 import models
 import schemas
@@ -15,12 +18,23 @@ from auth import (
     verify_password,
     create_access_token,
     get_current_user,
+    generate_refresh_token,
+    hash_refresh_token,
+    refresh_token_expiry,
 )
 from notifications import run_low_stock_check
 
 # Schema is now managed by Alembic migrations (see alembic/), not by
 # create_all() — run `alembic upgrade head` before starting the app.
 app = FastAPI(title="Supplement Restock Tracker")
+
+# Rate limiting, keyed by client IP. Applied selectively (see /auth/login
+# and /auth/register below) rather than globally — brute-force protection
+# matters most on auth endpoints; a blanket limit on every route would
+# punish normal use of the app (e.g. the shelf page listing + polling).
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Allows the React dev server (different origin/port) to call this API.
 app.add_middleware(
@@ -36,15 +50,26 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 
 @app.post("/auth/register", response_model=schemas.UserOut, status_code=201)
-def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, user: schemas.UserCreate, db: Session = Depends(get_db)):
     if crud.get_user_by_email(db, user.email):
         raise HTTPException(status_code=400, detail="Email is already registered")
     db_user = crud.create_user(db, email=user.email, hashed_password=hash_password(user.password))
     return db_user
 
 
+def _issue_tokens(db: Session, user: models.User) -> schemas.Token:
+    access_token = create_access_token(subject=user.email)
+    raw_refresh_token = generate_refresh_token()
+    crud.store_refresh_token(
+        db, user_id=user.id, token_hash=hash_refresh_token(raw_refresh_token), expires_at=refresh_token_expiry()
+    )
+    return schemas.Token(access_token=access_token, refresh_token=raw_refresh_token)
+
+
 @app.post("/auth/login", response_model=schemas.Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     # OAuth2PasswordRequestForm expects fields named "username"/"password"
     # (an OAuth2 spec convention) — we treat "username" as the email here.
     user = crud.get_user_by_email(db, form_data.username)
@@ -54,8 +79,44 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    token = create_access_token(subject=user.email)
-    return schemas.Token(access_token=token)
+    return _issue_tokens(db, user)
+
+
+@app.post("/auth/refresh", response_model=schemas.Token)
+def refresh(body: schemas.RefreshRequest, db: Session = Depends(get_db)):
+    """
+    Exchanges a valid, unexpired refresh token for a new access token.
+    The refresh token itself is rotated — the one presented here is
+    revoked and a brand new one issued — so a refresh token can only ever
+    be used once. If someone steals and replays an already-used refresh
+    token, it will simply fail here, which at minimum fails safe and in a
+    system with reuse-detection could flag the theft (not implemented
+    here, but this rotation is the mechanism that would make that possible
+    later).
+    """
+    token_hash = hash_refresh_token(body.refresh_token)
+    db_token = crud.get_valid_refresh_token(db, token_hash)
+    if db_token is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token")
+
+    crud.revoke_refresh_token(db, db_token)
+    user = db.get(models.User, db_token.user_id)
+    return _issue_tokens(db, user)
+
+
+@app.post("/auth/logout", status_code=204)
+def logout(body: schemas.RefreshRequest, db: Session = Depends(get_db)):
+    """
+    Revokes a specific refresh token server-side. This is what makes
+    logout meaningfully different from just deleting tokens client-side:
+    without this, a copied-out refresh token would keep working even
+    after the user "logs out" on the device it was taken from.
+    """
+    token_hash = hash_refresh_token(body.refresh_token)
+    db_token = crud.get_valid_refresh_token(db, token_hash)
+    if db_token is not None:
+        crud.revoke_refresh_token(db, db_token)
+    return None
 
 
 @app.get("/auth/me", response_model=schemas.UserOut)

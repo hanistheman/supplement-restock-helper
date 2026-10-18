@@ -1,24 +1,77 @@
 const BASE_URL = "http://127.0.0.1:8000";
-const TOKEN_KEY = "supplement_tracker_token";
+const ACCESS_TOKEN_KEY = "supplement_tracker_access_token";
+const REFRESH_TOKEN_KEY = "supplement_tracker_refresh_token";
 
-export function getToken() {
-  return localStorage.getItem(TOKEN_KEY);
+export function getAccessToken() {
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
-export function setToken(token) {
-  localStorage.setItem(TOKEN_KEY, token);
+export function getRefreshToken() {
+  return localStorage.getItem(REFRESH_TOKEN_KEY);
 }
 
-export function clearToken() {
-  localStorage.removeItem(TOKEN_KEY);
+function setTokens({ access_token, refresh_token }) {
+  localStorage.setItem(ACCESS_TOKEN_KEY, access_token);
+  localStorage.setItem(REFRESH_TOKEN_KEY, refresh_token);
 }
 
-async function request(path, options = {}) {
-  const token = getToken();
+function clearTokens() {
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+}
+
+// Shared across concurrent requests: if several requests 401 at the same
+// moment, they must not each call /auth/refresh independently — the
+// backend rotates (single-uses) refresh tokens, so a second concurrent
+// refresh call would be rejected since the first already consumed it.
+// Instead every caller awaits this one in-flight promise.
+let refreshPromise = null;
+
+async function refreshAccessToken() {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      const refreshToken = getRefreshToken();
+      if (!refreshToken) throw new Error("No refresh token available");
+
+      const res = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+      if (!res.ok) {
+        clearTokens();
+        throw new Error("Session expired — please log in again");
+      }
+      const data = await res.json();
+      setTokens(data);
+      return data.access_token;
+    })().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
+async function request(path, options = {}, _isRetry = false) {
+  const token = getAccessToken();
   const headers = { "Content-Type": "application/json", ...options.headers };
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+
+  if (res.status === 401 && !_isRetry && getRefreshToken()) {
+    // Access token is short-lived (15 min) by design — a 401 here most
+    // often just means it expired mid-session, not that the person is
+    // truly logged out. Try to transparently refresh and retry once,
+    // rather than bouncing them to the login screen for routine expiry.
+    try {
+      await refreshAccessToken();
+      return request(path, options, true);
+    } catch {
+      clearTokens();
+      throw new Error("Session expired — please log in again");
+    }
+  }
 
   if (!res.ok) {
     let detail = res.statusText;
@@ -28,10 +81,7 @@ async function request(path, options = {}) {
     } catch {
       // response had no JSON body (e.g. 204) — fall back to statusText
     }
-    // A 401 here means the token is missing/expired/invalid — clear it so
-    // the app falls back to the logged-out state instead of retrying with
-    // a token that will never work.
-    if (res.status === 401) clearToken();
+    if (res.status === 401) clearTokens();
     throw new Error(detail);
   }
 
@@ -55,11 +105,28 @@ export const auth = {
       throw new Error(data.detail || "Login failed");
     }
     const data = await res.json();
-    setToken(data.access_token);
+    setTokens(data);
     return data;
   },
   me: () => request("/auth/me"),
-  logout: () => clearToken(),
+  logout: async () => {
+    const refreshToken = getRefreshToken();
+    clearTokens();
+    if (refreshToken) {
+      // Best-effort: revoke server-side so a copied-out refresh token
+      // can't keep working after logout. If this fails (e.g. offline),
+      // the local tokens are already cleared either way.
+      try {
+        await fetch(`${BASE_URL}/auth/logout`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+      } catch {
+        // Network error on logout shouldn't block the user from leaving.
+      }
+    }
+  },
 };
 
 export const api = {

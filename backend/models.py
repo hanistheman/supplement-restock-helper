@@ -25,6 +25,25 @@ class User(Base):
     supplements: Mapped[list["Supplement"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
 
 
+class RefreshToken(Base):
+    """
+    Stores only a SHA-256 hash of the refresh token, never the raw value —
+    same principle as password storage. If the database were ever leaked,
+    the hashes alone can't be used to log in as anyone. Revoked/expired
+    tokens are kept (not deleted) so there's an audit trail of token use.
+    """
+    __tablename__ = "refresh_tokens"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    expires_at: Mapped["DateTime"] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped["DateTime"] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    user: Mapped["User"] = relationship()
+
+
 class Supplement(Base):
     __tablename__ = "supplements"
 

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { auth, getToken } from "./api";
+import { auth, getAccessToken, getRefreshToken } from "./api";
 
 const AuthContext = createContext(null);
 
@@ -11,8 +11,12 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
+    // Either token being present is enough to attempt /auth/me: if the
+    // access token has already expired by the time the page loads (it's
+    // only good for 15 minutes), the request() helper in api.js
+    // transparently refreshes it using the refresh token and retries —
+    // no special handling needed here.
+    if (!getAccessToken() && !getRefreshToken()) {
       setLoading(false);
       return;
     }
@@ -35,8 +39,8 @@ export function AuthProvider({ children }) {
     return login(email, password);
   };
 
-  const logout = () => {
-    auth.logout();
+  const logout = async () => {
+    await auth.logout();
     setUser(null);
   };
 

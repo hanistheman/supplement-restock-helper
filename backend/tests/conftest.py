@@ -44,6 +44,19 @@ def clean_tables():
             conn.execute(table.delete())
 
 
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    """
+    The rate limiter's counters are process-wide state, not per-test —
+    without resetting them, enough tests calling /auth/login or
+    /auth/register in one test run eventually trips the real 5/minute
+    limit, failing unrelated tests for reasons that have nothing to do
+    with what they're actually testing.
+    """
+    app.state.limiter.reset()
+    yield
+
+
 @pytest.fixture
 def db_session():
     session = TestingSessionLocal()
@@ -76,5 +89,17 @@ def auth_headers(client):
         res = client.post("/auth/login", data={"username": email, "password": password})
         token = res.json()["access_token"]
         return {"Authorization": f"Bearer {token}"}
+
+    return _make
+
+
+@pytest.fixture
+def auth_tokens(client):
+    """Like auth_headers, but returns the full token pair (access + refresh)
+    for tests that exercise the refresh/logout flow directly."""
+    def _make(email="test@example.com", password="testpassword123"):
+        client.post("/auth/register", json={"email": email, "password": password})
+        res = client.post("/auth/login", data={"username": email, "password": password})
+        return res.json()
 
     return _make

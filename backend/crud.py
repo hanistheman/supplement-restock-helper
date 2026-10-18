@@ -29,6 +29,44 @@ def get_user_by_email(db: Session, email: str) -> models.User | None:
     return db.query(models.User).filter(models.User.email == email).first()
 
 
+def store_refresh_token(db: Session, user_id: int, token_hash: str, expires_at) -> models.RefreshToken:
+    db_token = models.RefreshToken(user_id=user_id, token_hash=token_hash, expires_at=expires_at)
+    db.add(db_token)
+    db.commit()
+    db.refresh(db_token)
+    return db_token
+
+
+def get_valid_refresh_token(db: Session, token_hash: str) -> models.RefreshToken | None:
+    """Looks up a refresh token by its hash, only returning it if it's
+    neither revoked nor expired — a revoked or expired row still exists
+    in the table (for audit purposes) but is treated as unusable."""
+    from datetime import datetime, timezone
+
+    return (
+        db.query(models.RefreshToken)
+        .filter(
+            models.RefreshToken.token_hash == token_hash,
+            models.RefreshToken.revoked.is_(False),
+            models.RefreshToken.expires_at > datetime.now(timezone.utc),
+        )
+        .first()
+    )
+
+
+def revoke_refresh_token(db: Session, db_token: models.RefreshToken) -> None:
+    db_token.revoked = True
+    db.commit()
+
+
+def revoke_all_refresh_tokens_for_user(db: Session, user_id: int) -> None:
+    """Used on logout-everywhere or password change scenarios."""
+    db.query(models.RefreshToken).filter(
+        models.RefreshToken.user_id == user_id, models.RefreshToken.revoked.is_(False)
+    ).update({"revoked": True})
+    db.commit()
+
+
 def create_user(db: Session, email: str, hashed_password: str) -> models.User:
     db_user = models.User(email=email, hashed_password=hashed_password)
     db.add(db_user)

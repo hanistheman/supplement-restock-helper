@@ -66,3 +66,58 @@ def test_me_returns_current_user(client, auth_headers):
 def test_invalid_token_rejected(client):
     res = client.get("/auth/me", headers={"Authorization": "Bearer not-a-real-token"})
     assert res.status_code == 401
+
+
+def test_login_returns_both_tokens(client, auth_tokens):
+    tokens = auth_tokens()
+    assert "access_token" in tokens
+    assert "refresh_token" in tokens
+    assert tokens["token_type"] == "bearer"
+
+
+class TestRefreshFlow:
+    def test_refresh_issues_new_access_token(self, client, auth_tokens):
+        tokens = auth_tokens()
+        res = client.post("/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
+        assert res.status_code == 200
+        new_tokens = res.json()
+        assert "access_token" in new_tokens
+        # New access token should actually work against a protected route.
+        me = client.get("/auth/me", headers={"Authorization": f"Bearer {new_tokens['access_token']}"})
+        assert me.status_code == 200
+
+    def test_refresh_token_is_rotated(self, client, auth_tokens):
+        """Using a refresh token once should invalidate it — it can't be reused."""
+        tokens = auth_tokens()
+        first_refresh = client.post("/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
+        assert first_refresh.status_code == 200
+
+        # Reusing the SAME original refresh token a second time should fail.
+        second_attempt = client.post("/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
+        assert second_attempt.status_code == 401
+
+    def test_new_refresh_token_from_rotation_works(self, client, auth_tokens):
+        tokens = auth_tokens()
+        first = client.post("/auth/refresh", json={"refresh_token": tokens["refresh_token"]}).json()
+        # The NEW refresh token issued by rotation should itself be usable.
+        second = client.post("/auth/refresh", json={"refresh_token": first["refresh_token"]})
+        assert second.status_code == 200
+
+    def test_invalid_refresh_token_rejected(self, client):
+        res = client.post("/auth/refresh", json={"refresh_token": "not-a-real-token"})
+        assert res.status_code == 401
+
+    def test_revoked_refresh_token_rejected_after_logout(self, client, auth_tokens):
+        tokens = auth_tokens()
+        logout_res = client.post("/auth/logout", json={"refresh_token": tokens["refresh_token"]})
+        assert logout_res.status_code == 204
+
+        refresh_res = client.post("/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
+        assert refresh_res.status_code == 401
+
+    def test_logout_with_already_invalid_token_does_not_error(self, client):
+        # Logging out with a bogus/already-used token should be a harmless
+        # no-op, not a 500 — the client's job (clearing local state) still
+        # happens regardless of whether the server had anything to revoke.
+        res = client.post("/auth/logout", json={"refresh_token": "garbage-token"})
+        assert res.status_code == 204

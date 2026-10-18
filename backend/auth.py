@@ -3,7 +3,9 @@ Auth utilities: password hashing (bcrypt), JWT creation/verification, and
 the get_current_user dependency that protected routes use to identify
 "who is making this request".
 """
+import hashlib
 import os
+import secrets
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -23,7 +25,11 @@ if not SECRET_KEY:
     )
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 1 week
+# Short-lived on purpose: this is the token sent on every request, so a
+# stolen one is only useful for a brief window. Staying logged in beyond
+# this relies on the refresh token below, not a long-lived access token.
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
+REFRESH_TOKEN_EXPIRE_DAYS = 30
 
 # Tells FastAPI (and the /docs UI) where clients should send credentials to
 # get a token. tokenUrl is relative to the API root.
@@ -44,6 +50,28 @@ def create_access_token(subject: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {"sub": subject, "exp": expire}
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def generate_refresh_token() -> str:
+    """A long random opaque string — not a JWT. Nothing about it is
+    decodable; it's just a lookup key into the refresh_tokens table."""
+    return secrets.token_urlsafe(48)
+
+
+def hash_refresh_token(raw_token: str) -> str:
+    """
+    SHA-256 rather than bcrypt here: bcrypt is deliberately slow (that's
+    the point for passwords, to resist brute-forcing a short, guessable
+    secret). A refresh token is already a 48-byte random value no one is
+    going to brute-force, so a fast cryptographic hash is the right tool —
+    using bcrypt here would just add needless latency to every request
+    that presents a refresh token.
+    """
+    return hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+
+
+def refresh_token_expiry() -> datetime:
+    return datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
 
 
 def get_current_user(
