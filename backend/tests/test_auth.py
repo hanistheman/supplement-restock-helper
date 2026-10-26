@@ -2,6 +2,9 @@
 Tests for the auth endpoints: register, login, and the get_current_user
 dependency that protects every other route.
 """
+import pytest
+
+pytestmark = pytest.mark.django_db
 
 
 def test_register_creates_user(client):
@@ -23,12 +26,12 @@ def test_register_duplicate_email_rejected(client):
 
 def test_register_short_password_rejected(client):
     res = client.post("/auth/register", json={"email": "alice@example.com", "password": "short"})
-    assert res.status_code == 422
+    assert res.status_code == 400
 
 
 def test_register_invalid_email_rejected(client):
     res = client.post("/auth/register", json={"email": "not-an-email", "password": "hunter2pass"})
-    assert res.status_code == 422
+    assert res.status_code == 400
 
 
 def test_login_succeeds_with_correct_credentials(client):

@@ -5,6 +5,9 @@ These are arguably the most important tests in the project: a regression
 here means one user's private data leaking to another user, which is a
 real security bug, not just a broken feature.
 """
+import pytest
+
+pytestmark = pytest.mark.django_db
 
 
 def _create_supplement(client, headers, name="Vitamin D3"):

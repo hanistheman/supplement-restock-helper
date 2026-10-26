@@ -2,6 +2,9 @@
 Tests that auth endpoints are rate-limited, protecting against
 brute-force login/registration attempts.
 """
+import pytest
+
+pytestmark = pytest.mark.django_db
 
 
 def test_login_rate_limited_after_five_attempts(client):

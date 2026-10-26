@@ -12,10 +12,9 @@ jobs:
   backend-tests:
     runs-on: ubuntu-latest
 
-    # Spins up a real Postgres for the whole job — same engine as
-    # production, not a mock or SQLite stand-in. Credentials match what
-    # tests/conftest.py already expects (postgres/postgres@localhost:5432),
-    # so no test code needs to change to run here vs. locally.
+    # Check Django migrations against PostgreSQL. The test suite itself
+    # uses its isolated SQLite test settings, so it does not need this
+    # service to run.
     services:
       postgres:
         image: postgres:16
@@ -39,6 +38,9 @@ jobs:
       run:
         working-directory: backend
 
+    env:
+      SECRET_KEY: ci-test-secret-key-not-for-production
+
     steps:
       - uses: actions/checkout@v4
 
@@ -52,22 +54,21 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
 
-      - name: Run database migrations
-        # Applies Alembic migrations against a fresh database, the same
-        # way a real deploy would — this catches broken/out-of-order
-        # migrations before they'd ever hit a real environment.
+      - name: Run Django checks
+        run: python manage.py check
+
+      - name: Check migration state
         env:
           DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/supplement_tracker_test
-          SECRET_KEY: ci-test-secret-key-not-for-production
-        run: alembic upgrade head
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Apply migrations to PostgreSQL
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/supplement_tracker_test
+        run: python manage.py migrate --noinput
 
       - name: Run tests
-        env:
-          SECRET_KEY: ci-test-secret-key-not-for-production
-        # DATABASE_URL isn't set here on purpose — conftest.py sets it
-        # itself before any app module is imported, pointing at the same
-        # service container via localhost.
-        run: pytest -v
+        run: pytest -q
 
   frontend-build:
     runs-on: ubuntu-latest

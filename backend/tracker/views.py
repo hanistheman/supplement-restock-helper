@@ -7,7 +7,6 @@ from functools import wraps
 import bcrypt
 from django.conf import settings
 from django.core.cache import cache
-from django.core.mail import send_mail
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from jose import jwt, JWTError
@@ -17,6 +16,7 @@ from rest_framework.exceptions import AuthenticationFailed
 
 from .models import User, RefreshToken, Supplement, Source
 from logic import doses_per_day_from_frequency, days_remaining, restock_date, status_for
+from .services import run_low_stock_check
 
 ACCESS_MINUTES = 15
 REFRESH_DAYS = 30
@@ -118,9 +118,11 @@ def register(request):
 @limited
 def login(request):
     if request.method != "POST": return error("Method not allowed", 405)
-    try: data = body(request)
-    except ValueError: data = {}
-    if request.content_type == "application/x-www-form-urlencoded": data = request.POST
+    if request._request.content_type == "application/x-www-form-urlencoded":
+        data = request._request.POST
+    else:
+        try: data = body(request)
+        except ValueError: data = request._request.POST
     email = data.get("username", data.get("email", "")).strip().lower(); password = data.get("password", "")
     user = User.objects.filter(email=email).first()
     if not user or not bcrypt.checkpw(password.encode()[:72], user.hashed_password.encode()): return error("Incorrect email or password", 401)
@@ -160,22 +162,7 @@ def notification_settings(request):
 @permission_classes([AllowAny])
 def notifications_run(request):
     if not settings.NOTIFICATIONS_SECRET or request.headers.get("X-Notifications-Secret") != settings.NOTIFICATIONS_SECRET: return error("Invalid or missing notifications secret", 401)
-    sent = 0
-    for user in User.objects.filter(notifications_enabled=True).prefetch_related("supplements"):
-        low = []
-        for s in user.supplements.all():
-            left = days_remaining(s.start_date, s.total_doses, doses_per_day_from_frequency(s.dose_amount, s.frequency_count, s.frequency_unit))
-            if status_for(left) != "ok": low.append((s.name, left))
-        if low:
-            lines = ["Here's what's running low:\n"] + [
-                f"- {name} ({abs(days)} days overdue)" if days < 0 else f"- {name} ({days} days left)"
-                for name, days in sorted(low, key=lambda i: i[1])
-            ]
-            lines.append("\n— Supplement Restock Tracker")
-            if settings.EMAIL_HOST: send_mail(f"Supplement Tracker: {len(low)} item(s) need restocking", "\n".join(lines), settings.DEFAULT_FROM_EMAIL, [user.email])
-            else: print(f"[email:console-fallback] To: {user.email}\n" + "\n".join(lines))
-            sent += 1
-    return JsonResponse({"emails_sent": sent})
+    return JsonResponse({"emails_sent": run_low_stock_check()})
 
 @csrf_exempt_api
 @permission_classes([IsAuthenticated])

@@ -22,6 +22,17 @@ The initial Django migration uses the existing `users`, `refresh_tokens`, `suppl
 
 Create future schema changes with `python manage.py makemigrations` and apply them with `python manage.py migrate`.
 
+## Tests and CI
+
+Install the development dependencies and run the suite from `backend/`:
+
+```bash
+pip install -r requirements-dev.txt
+pytest -q
+```
+
+The tests use Django's isolated test database. SQLite is the default when `DATABASE_URL` is not set, so local tests and GitHub Actions do not need a running PostgreSQL service. The workflow at `.github/workflows/backend-tests.yml` runs Django system checks, verifies migration files are current, and runs the full suite on pushes and pull requests that touch the backend.
+
 ## Configuration
 
 Copy `.env.example` to `.env`. `SECRET_KEY` signs the 15-minute access tokens; refresh tokens are random, single-use values stored by SHA-256 hash for 30 days. Set `DJANGO_DEBUG=false` and a production secret before deployment. `NOTIFICATIONS_SECRET` protects the scheduled low-stock check. SMTP settings enable real mail; if `SMTP_HOST` is empty, notifications are printed to the server console.
