@@ -2,7 +2,7 @@
 
 A full-stack app for tracking when you'll run out of supplements, so you know when to restock — before you're standing at an empty bottle.
 
-Built as a learning project for REST API design (FastAPI + SQLAlchemy) and a React frontend.
+Built as a learning project using Django REST Framework and a React frontend.
 
 ## How it works
 
@@ -17,21 +17,19 @@ The app computes days remaining and a restock-by date, and flags anything runnin
 
 | Layer | Tech |
 |---|---|
-| Backend | Python, FastAPI, SQLAlchemy, PostgreSQL, Alembic, JWT auth (bcrypt + python-jose) |
+| Backend | Python, Django REST Framework, Django ORM, PostgreSQL, Django migrations, JWT auth (bcrypt + python-jose) |
 | Frontend | React (Vite) |
-| API docs | Auto-generated via FastAPI (Swagger UI + ReDoc) |
+| API | Django REST Framework |
 
 ## Project structure
 
 ```
 supplement-restock-predictor/
-├── backend/          # FastAPI REST API + PostgreSQL database
-│   ├── main.py        # App entrypoint, route handlers
-│   ├── database.py    # SQLAlchemy engine/session setup
-│   ├── models.py       # ORM table definitions
-│   ├── schemas.py      # Pydantic request/response schemas
-│   ├── crud.py          # DB read/write operations
-│   ├── logic.py          # Days-remaining / restock-date calculations
+├── backend/          # Django REST API + PostgreSQL database
+│   ├── manage.py       # Django management entrypoint
+│   ├── config/         # Django settings, URLs, WSGI
+│   ├── tracker/        # ORM models, API views, authentication, migrations
+│   ├── logic.py        # Days-remaining / restock-date calculations
 │   └── requirements.txt
 └── frontend/          # React (Vite) single-page app
     ├── src/
@@ -52,10 +50,11 @@ cd backend
 python3 -m venv venv
 source venv/bin/activate       # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn main:app --reload
+python manage.py migrate
+python manage.py runserver
 ```
 
-The API runs at `http://127.0.0.1:8000`. See `backend/README.md` for the full Postgres + Alembic setup (Docker Compose is included for local dev). Interactive API docs are at `http://127.0.0.1:8000/docs`.
+The API runs at `http://127.0.0.1:8000`. See `backend/README.md` for PostgreSQL setup and database migration notes (Docker Compose is included for local development).
 
 ### 2. Frontend
 
@@ -84,7 +83,6 @@ Each user has their own private set of supplements — sign up, log in, and only
 | `DELETE` | `/supplements/{id}` | Remove a supplement |
 | `POST` | `/supplements/{id}/restock` | Reset the start date to today (optionally pass `?new_total_doses=N` for a new bottle size) |
 
-Full request/response schemas are viewable at `/docs` while the backend is running.
 
 ## Status thresholds
 
