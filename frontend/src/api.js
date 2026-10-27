@@ -93,9 +93,7 @@ export const auth = {
   register: (email, password) =>
     request("/auth/register", { method: "POST", body: JSON.stringify({ email, password }) }),
   login: async (email, password) => {
-    // The backend's /auth/login endpoint is an OAuth2 "password flow"
-    // endpoint (FastAPI's standard pattern), which expects form-encoded
-    // fields named username/password rather than JSON.
+    // Keep the existing form-encoded username/password login contract.
     const body = new URLSearchParams();
     body.set("username", email);
     body.set("password", password);

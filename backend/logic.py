@@ -1,7 +1,4 @@
-"""
-Pure calculation logic — no DB, no FastAPI. This makes it trivial to unit
-test: you just pass in values and check the output.
-"""
+"""Pure supplement calculation helpers shared by Django views and services."""
 from datetime import date, timedelta
 
 # Average day-count used to convert "per month" / "per year" into a daily

@@ -3,7 +3,7 @@ import logging
 from django.conf import settings
 from django.core.mail import send_mail
 
-from logic import days_remaining, doses_per_day_from_frequency, status_for
+from logic import DAYS_PER_UNIT, days_remaining, doses_per_day_from_frequency, status_for
 from .models import User
 
 logger = logging.getLogger(__name__)
@@ -14,7 +14,9 @@ def get_low_stock_supplements(user):
     items = []
     for item in user.supplements.all():
         per_day = doses_per_day_from_frequency(item.dose_amount, item.frequency_count, item.frequency_unit)
-        remaining = days_remaining(item.start_date, item.total_doses, per_day)
+        skipped = item.skipped_days.filter(date__gte=item.start_date).count()
+        adjustment = round(skipped * DAYS_PER_UNIT[item.frequency_unit] / item.frequency_count)
+        remaining = days_remaining(item.start_date, item.total_doses, per_day) + adjustment
         state = status_for(remaining)
         if state in NOTIFY_STATUSES:
             items.append({"name": item.name, "days_remaining": remaining, "status": state})

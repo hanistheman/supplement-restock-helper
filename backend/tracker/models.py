@@ -43,3 +43,12 @@ class Source(models.Model):
     url = models.URLField(null=True, blank=True)
     class Meta:
         db_table = "sources"
+
+class SkippedDay(models.Model):
+    supplement = models.ForeignKey(Supplement, on_delete=models.CASCADE, related_name="skipped_days")
+    date = models.DateField()
+
+    class Meta:
+        db_table = "skipped_days"
+        ordering = ["date", "id"]
+        constraints = [models.UniqueConstraint(fields=["supplement", "date"], name="uq_skipped_day_supplement_date")]

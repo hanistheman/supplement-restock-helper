@@ -13,7 +13,11 @@ const FAQS = [
   },
   {
     q: "What happens when I click \"Restocked today\"?",
-    a: "It resets the start date to today, so the countdown starts fresh from the bottle's original total doses. If your new bottle has a different size, edit the supplement afterward to update the total doses.",
+    a: "It resets the start date to today and clears skipped dates from the previous bottle. If your new bottle has a different size, edit the supplement afterward to update the total doses.",
+  },
+  {
+    q: "Can I record a day I missed a dose?",
+    a: "Yes. Use the date field on a supplement card to record a missed scheduled dose. Each date can only be recorded once per supplement, and the projected restock date adjusts to account for it.",
   },
   {
     q: "What do the status colors mean?",
@@ -25,7 +29,7 @@ const FAQS = [
   },
   {
     q: "The app says it can't reach the server. What do I do?",
-    a: "Make sure the backend is running (uvicorn main:app --reload from the backend/ folder) before loading the frontend.",
+    a: "Make sure the backend is running (python manage.py runserver from the backend/ folder) before loading the frontend.",
   },
 ];
 

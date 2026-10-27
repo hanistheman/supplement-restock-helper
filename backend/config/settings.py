@@ -41,7 +41,8 @@ else:
 
 CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:3000"]
 REST_FRAMEWORK = {"DEFAULT_AUTHENTICATION_CLASSES": ["tracker.authentication.BearerAuthentication"],
-                  "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"]}
+                  "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
+                  "DEFAULT_THROTTLE_RATES": {"auth": "5/min"}}
 EMAIL_HOST = os.getenv("SMTP_HOST", "")
 EMAIL_PORT = int(os.getenv("SMTP_PORT", "587"))
 EMAIL_HOST_USER = os.getenv("SMTP_USERNAME", "")

@@ -18,7 +18,7 @@ The API listens on `http://127.0.0.1:8000`. PostgreSQL is available through `doc
 
 ## Existing PostgreSQL database
 
-The initial Django migration uses the existing `users`, `refresh_tokens`, `supplements`, and `sources` table names. Back up the database, then run `python manage.py migrate --fake-initial` to record the initial migration when those tables already exist. Review the live schema before doing this: the command marks the migration as applied without changing existing tables. New installs use `python manage.py migrate` normally.
+The Django initial migration uses the existing `users`, `refresh_tokens`, `supplements`, and `sources` table names. For a database already created by the earlier SQLAlchemy setup, back it up, review its schema, and run `python manage.py migrate --fake-initial` to record the initial migration. Apply later schema changes with `python manage.py migrate`.
 
 Create future schema changes with `python manage.py makemigrations` and apply them with `python manage.py migrate`.
 
@@ -42,5 +42,7 @@ Copy `.env.example` to `.env`. `SECRET_KEY` signs the 15-minute access tokens; r
 Auth endpoints: `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me`, and `PATCH /auth/me/notifications`.
 
 Supplement endpoints: `GET/POST /supplements`, `GET/PUT/DELETE /supplements/{id}`, `POST /supplements/{id}/restock`, `POST /supplements/{id}/sources`, `DELETE /sources/{id}`, plus scheduler-only `POST /notifications/run`.
+
+Skipped-dose endpoints: `POST /supplements/{id}/skipped-days` with `{"date":"YYYY-MM-DD"}` and `DELETE /supplements/{id}/skipped-days/{skipped_day_id}`. Each missed scheduled dose extends the projected supply by one scheduled dosing interval. Restocking clears the skipped dates from the previous bottle.
 
 Login accepts the existing form-encoded `username`/`password` contract (email is used as username). Auth register/login are limited to five requests per minute per IP using Django's local memory cache; for multiple workers, configure a shared Django cache backend.

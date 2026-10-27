@@ -25,7 +25,7 @@ export default function AboutPage() {
 
       <h2 className="font-display text-lg font-semibold mt-8 mb-2.5">Stack</h2>
       <p>
-        Built with a FastAPI + SQLAlchemy backend and a React (Vite) frontend,
+        Built with Django REST Framework and a React (Vite) frontend,
         as a hands-on project for learning REST API design and full-stack
         development practices.
       </p>
