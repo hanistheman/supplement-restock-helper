@@ -8,7 +8,7 @@ They often look similar but they don't have to match, and keeping them
 separate means you can change your DB schema without automatically
 changing your API contract (and vice versa).
 """
-from sqlalchemy import Integer, String, Float, Date, ForeignKey, DateTime, Boolean, func
+from sqlalchemy import Integer, String, Float, Date, ForeignKey, DateTime, Boolean, func, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
 
@@ -66,6 +66,20 @@ class Supplement(Base):
     sources: Mapped[list["Source"]] = relationship(
         back_populates="supplement", cascade="all, delete-orphan", order_by="Source.id"
     )
+    skipped_days: Mapped[list["SkippedDay"]] = relationship(
+        back_populates="supplement", cascade="all, delete-orphan", order_by="SkippedDay.date"
+    )
+
+
+class SkippedDay(Base):
+    __tablename__ = "skipped_days"
+    __table_args__ = (UniqueConstraint("supplement_id", "date", name="uq_skipped_day_supplement_date"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    supplement_id: Mapped[int] = mapped_column(ForeignKey("supplements.id", ondelete="CASCADE"), nullable=False)
+    date: Mapped[Date] = mapped_column(Date, nullable=False)
+
+    supplement: Mapped["Supplement"] = relationship(back_populates="skipped_days")
 
 
 class Source(Base):

@@ -1,6 +1,6 @@
 import SupplementCard from "./SupplementCard";
 
-export default function SupplementList({ supplements, onEdit, onDelete, onRestock, onAddSource, onRemoveSource, isFiltered = false }) {
+export default function SupplementList({ supplements, onEdit, onDelete, onRestock, onAddSource, onRemoveSource, onAddSkippedDay, onRemoveSkippedDay, isFiltered = false }) {
   if (supplements.length === 0) {
     return (
       <div className="border border-dashed border-line rounded-xl px-6 py-12 text-center bg-paper">
@@ -27,6 +27,8 @@ export default function SupplementList({ supplements, onEdit, onDelete, onRestoc
           onRestock={() => onRestock(s.id)}
           onAddSource={onAddSource}
           onRemoveSource={onRemoveSource}
+          onAddSkippedDay={onAddSkippedDay}
+          onRemoveSkippedDay={onRemoveSkippedDay}
         />
       ))}
     </div>

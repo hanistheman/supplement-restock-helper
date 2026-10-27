@@ -63,6 +63,16 @@ export default function ShelfPage() {
     load();
   };
 
+  const handleAddSkippedDay = async (supplementId, skippedDate) => {
+    await api.addSkippedDay(supplementId, skippedDate);
+    await load();
+  };
+
+  const handleRemoveSkippedDay = async (supplementId, skippedDayId) => {
+    await api.removeSkippedDay(supplementId, skippedDayId);
+    await load();
+  };
+
   // Derived, filtered/sorted view — kept separate from the raw fetched data
   // so search/sort/filter never need to touch the network.
   const visibleSupplements = useMemo(() => {
@@ -133,6 +143,8 @@ export default function ShelfPage() {
             onRestock={handleRestock}
             onAddSource={handleAddSource}
             onRemoveSource={handleRemoveSource}
+            onAddSkippedDay={handleAddSkippedDay}
+            onRemoveSkippedDay={handleRemoveSkippedDay}
             isFiltered={supplements.length > 0 && visibleSupplements.length === 0}
           />
         </>

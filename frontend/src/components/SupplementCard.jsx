@@ -1,3 +1,4 @@
+import { useState } from "react";
 import SourceList from "./SourceList";
 
 const STATUS_LABEL = {
@@ -40,6 +41,12 @@ function formatDate(iso) {
   });
 }
 
+function localToday() {
+  const now = new Date();
+  const offset = now.getTimezoneOffset() * 60_000;
+  return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+}
+
 function formatFrequency(doseAmount, frequencyCount, frequencyUnit) {
   const dosePart = doseAmount === 1 ? "1 dose" : `${doseAmount} doses`;
   const unit = UNIT_LABEL[frequencyUnit] ?? frequencyUnit;
@@ -47,7 +54,7 @@ function formatFrequency(doseAmount, frequencyCount, frequencyUnit) {
   return `${dosePart}, ${frequencyCount}x per ${unit}`;
 }
 
-export default function SupplementCard({ supplement, onEdit, onDelete, onRestock, onAddSource, onRemoveSource }) {
+export default function SupplementCard({ supplement, onEdit, onDelete, onRestock, onAddSource, onRemoveSource, onAddSkippedDay, onRemoveSkippedDay }) {
   const {
     name,
     notes,
@@ -59,7 +66,11 @@ export default function SupplementCard({ supplement, onEdit, onDelete, onRestock
     frequency_count,
     frequency_unit,
     sources,
+    skipped_days,
+    start_date,
   } = supplement;
+  const [skipDate, setSkipDate] = useState("");
+  const [skipError, setSkipError] = useState("");
 
   // The progress bar needs "total days of supply" as a denominator, which
   // isn't returned directly by the API — so it's reconstructed here from
@@ -111,6 +122,29 @@ export default function SupplementCard({ supplement, onEdit, onDelete, onRestock
           onAdd={(source) => onAddSource(supplement.id, source)}
           onRemove={onRemoveSource}
         />
+        <section className="mt-3 border-t border-line pt-3">
+          <p className="text-ink-soft text-xs mb-2 mt-0">Skipped days ({skipped_days?.length ?? 0})</p>
+          <form className="flex items-center gap-2 flex-wrap" onSubmit={async (event) => {
+            event.preventDefault();
+            if (!skipDate) return;
+            try {
+              setSkipError("");
+              await onAddSkippedDay(supplement.id, skipDate);
+              setSkipDate("");
+            } catch (error) {
+              setSkipError(error.message);
+            }
+          }}>
+            <input aria-label={`Skipped date for ${name}`} type="date" min={start_date} max={localToday()} value={skipDate} onChange={(event) => setSkipDate(event.target.value)} className="border border-line rounded-md px-2 py-1 text-xs" />
+            <button type="submit" disabled={!skipDate} className="text-accent text-xs font-semibold disabled:opacity-50">Record missed dose</button>
+          </form>
+          {skipError && <p role="alert" className="text-critical text-xs mb-0 mt-1">{skipError}</p>}
+          {!!skipped_days?.length && <ul className="mt-2 mb-0 pl-4 text-xs text-ink-soft space-y-1">
+            {skipped_days.map((day) => <li key={day.id}>
+              {formatDate(day.date)} <button type="button" aria-label={`Remove skipped day ${formatDate(day.date)}`} onClick={() => onRemoveSkippedDay(supplement.id, day.id)} className="ml-1 text-ink-soft hover:text-critical">×</button>
+            </li>)}
+          </ul>}
+        </section>
       </div>
 
       <div className="flex flex-col items-end gap-2">

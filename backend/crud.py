@@ -132,6 +132,9 @@ def restock_supplement(db: Session, db_supplement: models.Supplement, new_total_
     """Reset start_date to today; optionally update total_doses (new bottle size)."""
     from datetime import date
     db_supplement.start_date = date.today()
+    # A new bottle starts a new consumption period; prior missed doses belong
+    # to the previous bottle and must not extend this one's estimate.
+    db_supplement.skipped_days.clear()
     if new_total_doses is not None:
         db_supplement.total_doses = new_total_doses
     db.commit()

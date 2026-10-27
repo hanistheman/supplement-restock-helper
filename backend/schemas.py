@@ -93,12 +93,23 @@ class SupplementUpdate(BaseModel):
     notes: str | None = None
 
 
+class SkippedDayCreate(BaseModel):
+    date: date
+
+
+class SkippedDayOut(BaseModel):
+    id: int
+    date: date
+    model_config = ConfigDict(from_attributes=True)
+
+
 class SupplementOut(SupplementBase):
     id: int
     days_remaining: int
     restock_date: date
     status: str
     sources: list[SourceOut] = Field(default_factory=list)
+    skipped_days: list[SkippedDayOut] = Field(default_factory=list)
 
     # Lets Pydantic build this schema directly from a SQLAlchemy ORM object
     # (model.name, model.id, etc.) rather than requiring a dict.

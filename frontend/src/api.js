@@ -146,4 +146,11 @@ export const api = {
       body: JSON.stringify(source),
     }),
   removeSource: (sourceId) => request(`/sources/${sourceId}`, { method: "DELETE" }),
+  addSkippedDay: (supplementId, skippedDate) =>
+    request(`/supplements/${supplementId}/skipped-days`, {
+      method: "POST",
+      body: JSON.stringify({ date: skippedDate }),
+    }),
+  removeSkippedDay: (supplementId, skippedDayId) =>
+    request(`/supplements/${supplementId}/skipped-days/${skippedDayId}`, { method: "DELETE" }),
 };

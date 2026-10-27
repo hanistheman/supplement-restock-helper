@@ -1,4 +1,5 @@
 import os
+from datetime import date, timedelta
 
 from fastapi import FastAPI, Depends, HTTPException, status, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -162,7 +163,9 @@ def trigger_notifications(db: Session = Depends(get_db)):
 def _to_out(s: models.Supplement) -> schemas.SupplementOut:
     """Attach the computed fields (days_remaining, restock_date, status) before returning."""
     doses_per_day = logic.doses_per_day_from_frequency(s.dose_amount, s.frequency_count, s.frequency_unit)
-    days_left = logic.days_remaining(s.start_date, s.total_doses, doses_per_day)
+    skipped_count = sum(1 for entry in s.skipped_days if entry.date >= s.start_date)
+    missed_interval = logic.DAYS_PER_UNIT[s.frequency_unit] / s.frequency_count
+    days_left = logic.days_remaining(s.start_date, s.total_doses, doses_per_day) + round(skipped_count * missed_interval)
     return schemas.SupplementOut(
         id=s.id,
         name=s.name,
@@ -173,9 +176,10 @@ def _to_out(s: models.Supplement) -> schemas.SupplementOut:
         frequency_unit=s.frequency_unit,
         notes=s.notes,
         days_remaining=days_left,
-        restock_date=logic.restock_date(s.start_date, s.total_doses, doses_per_day),
+        restock_date=logic.restock_date(s.start_date, s.total_doses, doses_per_day) + timedelta(days=round(skipped_count * missed_interval)),
         status=logic.status_for(days_left),
         sources=[schemas.SourceOut.model_validate(src) for src in s.sources],
+        skipped_days=[schemas.SkippedDayOut.model_validate(day) for day in s.skipped_days],
     )
 
 
@@ -247,6 +251,40 @@ def restock_supplement(
     db_supplement = _get_or_404(db, supplement_id, current_user.id)
     db_supplement = crud.restock_supplement(db, db_supplement, new_total_doses)
     return _to_out(db_supplement)
+
+
+@app.post("/supplements/{supplement_id}/skipped-days", response_model=schemas.SupplementOut, status_code=201)
+def add_skipped_day(
+    supplement_id: int,
+    skipped_day: schemas.SkippedDayCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    db_supplement = _get_or_404(db, supplement_id, current_user.id)
+    if skipped_day.date < db_supplement.start_date or skipped_day.date > date.today():
+        raise HTTPException(status_code=422, detail="Skipped date must be between the supplement start date and today")
+    if any(entry.date == skipped_day.date for entry in db_supplement.skipped_days):
+        raise HTTPException(status_code=409, detail="A skipped day is already recorded for this date")
+    db_supplement.skipped_days.append(models.SkippedDay(date=skipped_day.date))
+    db.commit()
+    db.refresh(db_supplement)
+    return _to_out(db_supplement)
+
+
+@app.delete("/supplements/{supplement_id}/skipped-days/{skipped_day_id}", status_code=204)
+def delete_skipped_day(
+    supplement_id: int,
+    skipped_day_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    db_supplement = _get_or_404(db, supplement_id, current_user.id)
+    entry = next((day for day in db_supplement.skipped_days if day.id == skipped_day_id), None)
+    if entry is None:
+        raise HTTPException(status_code=404, detail=f"Skipped day {skipped_day_id} not found")
+    db.delete(entry)
+    db.commit()
+    return None
 
 
 # Sources are managed as their own sub-resource rather than folded into
