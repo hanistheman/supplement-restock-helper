@@ -18,7 +18,7 @@ The API listens on `http://127.0.0.1:8000`. PostgreSQL is available through `doc
 
 ## Existing PostgreSQL database
 
-The Django initial migration uses the existing `users`, `refresh_tokens`, `supplements`, and `sources` table names. For a database already created by the earlier SQLAlchemy setup, back it up, review its schema, and run `python manage.py migrate --fake-initial` to record the initial migration. Apply later schema changes with `python manage.py migrate`.
+The Django initial migration uses the existing `users`, `refresh_tokens`, `supplements`, and `sources` table names. For a database that already has those tables, back it up, review its schema, and run `python manage.py migrate --fake-initial` to record the initial migration. If that database already has a `skipped_days` table, record the skipped-day migrsation with `python manage.py migrate tracker 0002 --fake`; otherwise, apply it normally with `python manage.py migrate`.
 
 Create future schema changes with `python manage.py makemigrations` and apply them with `python manage.py migrate`.
 
